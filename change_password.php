@@ -22,7 +22,7 @@
             <div class="row align-items-center">
 
                 <div class="col-11 col-xl-2 site-logo">
-                    <h1 class="mb-0"><a href="index.php" class="text-white h5 mb-0">Pos laju</a></h1>
+                    <h1 class="mb-0"><a href="index.php" class="text-white h5 mb-0">FOJ Express</a></h1>
                 </div>
                 <div class="col-12 col-md-10 d-none d-xl-block">
                     <nav class="site-navigation position-relative text-right" role="navigation">
@@ -34,13 +34,13 @@
                             </li>
                             <li><a href="index.php#section-gallery" class="nav-link">Gallery</a></li>
                             <li><a href="index.php#section-contact" class="nav-link">Contact</a></li>
-                            <?php if(isset($_SESSION['customer'])) :?>
-                            <li><a href="profile.php" class="nav-link">Profile</a></li>
-                            <li><a href="tracking.php" class="nav-link">Tracking</a></li>
-                            <li><a href="admin/logout.php" class="nav-link">Logout</a></li>
-                            <?php else :?>
-                            <li><a href="admin/login.php" class="nav-link">Login</a></li>
-                            <?php endif;?>
+                            <?php if (isset($_SESSION['customer'])): ?>
+                                <li><a href="profile.php" class="nav-link">Profile</a></li>
+                                <li><a href="tracking.php" class="nav-link">Tracking</a></li>
+                                <li><a href="admin/logout.php" class="nav-link">Logout</a></li>
+                            <?php else: ?>
+                                <li><a href="admin/login.php" class="nav-link">Login</a></li>
+                            <?php endif; ?>
                             <li><a href="request.php" class="nav-link active">Request</a></li>
                         </ul>
                     </nav>
@@ -86,10 +86,10 @@
             </div>
             <div class="row">
                 <div class="col-md-12 mb-5">
-                    <?php 
-$getall = getAllcustomerById($_SESSION['customer']);
-$row=mysqli_fetch_assoc($getall);
-$customer_id = $row['customer_id']; ?>
+                    <?php
+                    $getall = getAllcustomerById($_SESSION['customer']);
+                    $row = mysqli_fetch_assoc($getall);
+                    $customer_id = $row['customer_id']; ?>
                     <div class="row">
                         <div class="col-lg-5">
                             <div class="d-flex flex-column justify-content-center bg-primary h-100 p-5">
@@ -133,7 +133,11 @@ $customer_id = $row['customer_id']; ?>
                                     <div class="d-flex flex-column">
                                         <h4 class="text-info">Gender</h4>
                                         <p class="m-0 text-white">
-                                            <?php if ($row['gender']=="1") echo "Male"; else echo "Female"; ?></p>
+                                            <?php if ($row['gender'] == "1")
+                                                echo "Male";
+                                            else
+                                                echo "Female"; ?>
+                                        </p>
                                     </div>
                                 </div>
 
@@ -141,8 +145,8 @@ $customer_id = $row['customer_id']; ?>
                         </div>
                         <div class="col-lg-7 mb-5 my-lg-5 py-5 pl-lg-5">
                             <div class="contact-form">
-                                
-                            <form method="POST" class="row g-3 needs-validation" novalidate
+
+                                <form method="POST" class="row g-3 needs-validation" novalidate
                                     enctype="multipart/form-data">
                                     <div class="col-md-12 mt-2">
                                         <label for="current_password" class="form-label">Current Password Name</label>

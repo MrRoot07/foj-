@@ -10,7 +10,7 @@
                 <div class="sidebar-header">
                     <div class="d-flex justify-content-between mt-0 px-2">
 
-                        <h1 class="mb-0"><a href="index.php" class="text-warning h5 mb-0 px-2 ">Pos laju </a></h1>
+                        <h1 class="mb-0"><a href="index.php" class="text-warning h5 mb-0 px-2 ">FOJ Express </a></h1>
 
                     </div>
                 </div>
@@ -48,7 +48,7 @@
                                 <span>Message</span>
                             </a>
                         </li>
-                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin') : ?>
+                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin'): ?>
                             <li class="sidebar-item">
                                 <a href="branch.php" class='sidebar-link'>
                                     <i class="bi bi-columns"></i>
@@ -62,7 +62,7 @@
                                 <span>Employee </span>
                             </a>
                         </li>
-                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin') : ?>
+                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin'): ?>
                             <li class="sidebar-item">
                                 <a href="area.php" class='sidebar-link'>
                                     <i class="bi bi-geo-alt-fill"></i>
@@ -132,7 +132,8 @@
                                             </div>
                                             <div class="col-md-8">
                                                 <h6 class="text-muted font-semibold">Customers</h6>
-                                                <h6 class="font-extrabold mb-0"><?php echo dataCount('customer'); ?></h6>
+                                                <h6 class="font-extrabold mb-0"><?php echo dataCount('customer'); ?>
+                                                </h6>
                                             </div>
                                         </div>
                                     </div>
@@ -149,7 +150,8 @@
                                             </div>
                                             <div class="col-md-8">
                                                 <h6 class="text-muted font-semibold">Employee</h6>
-                                                <h6 class="font-extrabold mb-0"><?php echo dataCount('employee'); ?></h6>
+                                                <h6 class="font-extrabold mb-0"><?php echo dataCount('employee'); ?>
+                                                </h6>
                                             </div>
                                         </div>
                                     </div>
@@ -187,7 +189,9 @@
                                             </div>
                                             <div class="col-md-8">
                                                 <h6 class="text-muted font-semibold">Pending Orders</h6>
-                                                <h6 class="font-extrabold mb-0"><?php echo dataCountWhere('request', ' tracking_status = 1 '); ?></h6>
+                                                <h6 class="font-extrabold mb-0">
+                                                    <?php echo dataCountWhere('request', ' tracking_status = 1 '); ?>
+                                                </h6>
                                             </div>
                                         </div>
                                     </div>
@@ -204,7 +208,9 @@
                                             </div>
                                             <div class="col-md-8">
                                                 <h6 class="text-muted font-semibold">Accepted</h6>
-                                                <h6 class="font-extrabold mb-0"><?php echo dataCountWhere('request', ' tracking_status = 2 '); ?></h6>
+                                                <h6 class="font-extrabold mb-0">
+                                                    <?php echo dataCountWhere('request', ' tracking_status = 2 '); ?>
+                                                </h6>
                                             </div>
                                         </div>
                                     </div>
@@ -221,7 +227,9 @@
                                             </div>
                                             <div class="col-md-8">
                                                 <h6 class="text-muted font-semibold">Cancel Orders</h6>
-                                                <h6 class="font-extrabold mb-0"><?php echo dataCountWhere('request', ' tracking_status = 5 '); ?></h6>
+                                                <h6 class="font-extrabold mb-0">
+                                                    <?php echo dataCountWhere('request', ' tracking_status = 5 '); ?>
+                                                </h6>
                                             </div>
                                         </div>
                                     </div>
@@ -238,7 +246,9 @@
                                             </div>
                                             <div class="col-md-8">
                                                 <h6 class="text-muted font-semibold">Completed Orders</h6>
-                                                <h6 class="font-extrabold mb-0"><?php echo dataCountWhere('request', ' tracking_status = 3 '); ?></h6>
+                                                <h6 class="font-extrabold mb-0">
+                                                    <?php echo dataCountWhere('request', ' tracking_status = 3 '); ?>
+                                                </h6>
                                             </div>
                                         </div>
                                     </div>

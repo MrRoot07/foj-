@@ -11,7 +11,7 @@
                 <div class="sidebar-header">
                     <div class="d-flex justify-content-between mt-0 px-2">
 
-                        <h1 class="mb-0"><a href="index.php" class="text-warning h5 mb-0 px-2 ">Pos laju </a></h1>
+                        <h1 class="mb-0"><a href="index.php" class="text-warning h5 mb-0 px-2 ">FOJ Express </a></h1>
 
                     </div>
                 </div>
@@ -49,7 +49,7 @@
                                 <span>Message</span>
                             </a>
                         </li>
-                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin') : ?>
+                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin'): ?>
                             <li class="sidebar-item">
                                 <a href="branch.php" class='sidebar-link'>
                                     <i class="bi bi-columns"></i>
@@ -63,7 +63,7 @@
                                 <span>Employee </span>
                             </a>
                         </li>
-                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin') : ?>
+                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin'): ?>
                             <li class="sidebar-item">
                                 <a href="area.php" class='sidebar-link'>
                                     <i class="bi bi-geo-alt-fill"></i>
@@ -114,7 +114,7 @@
                         </ol>
                     </nav>
                 </div>
-                <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin') : ?>
+                <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin'): ?>
                     <div class="col-lg-2">
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#EmployeeModal"> Add
                             New</button>
@@ -162,7 +162,7 @@
 
                                     while ($row = mysqli_fetch_assoc($getall)) {
                                         $emp_id = $row['emp_id'];
-                                    ?>
+                                        ?>
 
 
                                         <tr>
@@ -183,7 +183,7 @@
                                                 <?php echo $row['address']; ?>
                                             </td>
                                             <td>
-                                                <?php $getCat =  getBranchByID($row['branch_id']);
+                                                <?php $getCat = getBranchByID($row['branch_id']);
                                                 if ($row4 = mysqli_fetch_assoc($getCat)) {
                                                     echo $row4['branch_name'];
                                                 } ?>
@@ -195,10 +195,13 @@
                                                     echo "Female";
                                                 } ?>
                                             </td>
-                                            <td> <a href="empolyee_edit.php?emp_id=<?php echo $emp_id; ?>" class="btn btn-darkblue"> <i class="fa-solid fa-edit"></i>
+                                            <td> <a href="empolyee_edit.php?emp_id=<?php echo $emp_id; ?>"
+                                                    class="btn btn-darkblue"> <i class="fa-solid fa-edit"></i>
                                                 </a>
-                                                <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin') : ?>
-                                                    <button type="button" onclick="deleteData(<?php echo $row['emp_id']; ?>,'employee', 'emp_id')" class="btn btn-darkblue"> <i class="fa-solid fa-trash"></i>
+                                                <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin'): ?>
+                                                    <button type="button"
+                                                        onclick="deleteData(<?php echo $row['emp_id']; ?>,'employee', 'emp_id')"
+                                                        class="btn btn-darkblue"> <i class="fa-solid fa-trash"></i>
                                                     </button>
                                                 <?php endif; ?>
 
@@ -233,20 +236,25 @@
                         <form action="" method="post" id="basicform" data-parsley-validate="">
                             <div class="form-group mt-2">
                                 <label for="inputName">Name</label>
-                                <input id="inputName" type="text" name="name" data-parsley-trigger="change" required="" placeholder="Enter Full Name" autocomplete="off" class="form-control">
+                                <input id="inputName" type="text" name="name" data-parsley-trigger="change" required=""
+                                    placeholder="Enter Full Name" autocomplete="off" class="form-control">
                             </div>
 
                             <div class="form-group mt-2">
                                 <label for="inputEmail">Email address</label>
-                                <input id="inputEmail" type="email" name="email" data-parsley-trigger="change" required="" placeholder="Enter email" autocomplete="off" class="form-control">
+                                <input id="inputEmail" type="email" name="email" data-parsley-trigger="change"
+                                    required="" placeholder="Enter email" autocomplete="off" class="form-control">
                             </div>
                             <div class="form-group mt-2">
                                 <label for="inputPhone">Phone Number</label>
-                                <input id="inputPhone" type="text" name="phone" data-parsley-trigger="change" required="" placeholder="Enter Phone Number" autocomplete="off" class="form-control">
+                                <input id="inputPhone" type="text" name="phone" data-parsley-trigger="change"
+                                    required="" placeholder="Enter Phone Number" autocomplete="off"
+                                    class="form-control">
                             </div>
                             <div class="form-group mt-2">
                                 <label for="inputNIC">NIC</label>
-                                <input id="inputNIC" type="text" name="nic" data-parsley-trigger="change" required="" placeholder="Enter NIC Number" autocomplete="off" class="form-control">
+                                <input id="inputNIC" type="text" name="nic" data-parsley-trigger="change" required=""
+                                    placeholder="Enter NIC Number" autocomplete="off" class="form-control">
                             </div>
                             <div class="form-group mt-2">
                                 <label for="inputNIC">Branch</label>
@@ -261,28 +269,33 @@
                             </div>
                             <div class="form-group mt-2">
                                 <label for="inputAddress">Address</label>
-                                <input id="inputAddress" type="text" name="address" data-parsley-trigger="change" required="" placeholder="Enter Address" autocomplete="off" class="form-control">
+                                <input id="inputAddress" type="text" name="address" data-parsley-trigger="change"
+                                    required="" placeholder="Enter Address" autocomplete="off" class="form-control">
                             </div>
                             <div class="form-group mt-2">
                                 <label for="inputGender">Gender</label>
-                                <select class="form-select" name="gender" id="gender" aria-label="Default select example">
+                                <select class="form-select" name="gender" id="gender"
+                                    aria-label="Default select example">
                                     <option value="1" selected>Male</option>
                                     <option value="0">Female</option>
                                 </select>
                             </div>
                             <div class="form-group mt-2">
                                 <label for="inputPassword">Password</label>
-                                <input id="inputPassword" type="password" name="password" placeholder="Password" required="" class="form-control">
+                                <input id="inputPassword" type="password" name="password" placeholder="Password"
+                                    required="" class="form-control">
                             </div>
                             <div class="form-group mt-2">
                                 <label for="inputRepeatPassword">Repeat Password</label>
-                                <input id="inputRepeatPassword" data-parsley-equalto="#inputPassword" type="password" required="" name="conf_password" placeholder="Password" class="form-control">
+                                <input id="inputRepeatPassword" data-parsley-equalto="#inputPassword" type="password"
+                                    required="" name="conf_password" placeholder="Password" class="form-control">
                             </div>
 
                     </div>
                     <div class="modal-footer ">
                         <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" onclick="addEmployee(this.form)" name="submit" class="btn btn-primary">Save
+                        <button type="button" onclick="addEmployee(this.form)" name="submit"
+                            class="btn btn-primary">Save
                             changes</button>
                     </div>
                 </form>

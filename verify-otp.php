@@ -28,127 +28,382 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $message = "Invalid OTP. Please try again.";
     }
 }
-?>
 
+$companyName = "FOJ Express";
+?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify OTP - Delivery System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Verify OTP · <?php echo $companyName; ?></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <style>
+        /* Design tokens: same as landing/login/register (light theme) */
+        :root {
+            --bg: #ffffff;
+            --panel: #f7f9fc;
+            --muted: #556070;
+            --text: #0b0d13;
+            --brand: #2563eb;
+            --brand-2: #06b6d4;
+            --ring: 0 0 0 3px rgba(37, 99, 235, .25);
+            --radius: 14px;
+            --shadow: 0 8px 24px rgba(0, 0, 0, .12), 0 2px 8px rgba(0, 0, 0, .08);
+            --shadow-soft: 0 6px 18px rgba(0, 0, 0, .08), inset 0 1px 0 rgba(255, 255, 255, .6);
+            --grid-max: 1200px;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html,
         body {
-            background-color: #f8f9fa;
-            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif
         }
 
-        header {
-            background-color:rgb(79, 100, 128);
-            color: #ffffff;
-            padding: 10px 0;
-        }
-
-        header a {
-            color: #ffffff;
-            text-decoration: none;
-            font-weight: bold;
+        a {
+            color: inherit;
+            text-decoration: none
         }
 
         .container {
-            margin-top: 5%;
+            max-width: var(--grid-max);
+            margin: 0 auto;
+            padding: 0 20px
         }
 
-        .form-control {
-            border: 1px solid #ddd;
+        /* Header / Nav */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(255, 255, 255, .85);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, .08)
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            letter-spacing: .2px
+        }
+
+        .brand .logo {
+            width: 36px;
+            height: 36px;
             border-radius: 10px;
-            padding: 10px;
+            background: linear-gradient(135deg, var(--brand), var(--brand-2));
+            display: grid;
+            place-items: center;
+            box-shadow: var(--shadow-soft)
         }
 
-        .btn-primary {
-            background-color:rgb(79, 100, 128);
+        .brand .logo svg {
+            width: 22px;
+            height: 22px
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 22px
+        }
+
+        .nav-cta {
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid rgba(0, 0, 0, .12);
+            padding: 10px 14px;
+            border-radius: 12px;
+            background: transparent;
+            color: var(--text);
+            font-weight: 600;
+            transition: .2s ease
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            border-color: rgba(0, 0, 0, .22)
+        }
+
+        .btn.primary {
+            background: linear-gradient(135deg, var(--brand), var(--brand-2));
             border: none;
-            border-radius: 10px;
-            font-size: 16px;
+            color: white;
+            box-shadow: var(--shadow)
         }
 
-        .btn-primary:hover {
-            background-color:rgb(79, 100, 128);
+        .btn.light {
+            background: rgba(0, 0, 0, .06)
         }
 
-        .form-container {
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        .hamburger {
+            display: none;
+            background: transparent;
+            border: none;
+            color: var(--text)
         }
 
-        .nav-link {
-            color: #ffffff;
+        .mobile-menu {
+            display: none
         }
 
-        .nav-link:hover {
-            text-decoration: underline;
+        @media (max-width:980px) {
+            .nav-links {
+                display: none
+            }
+
+            .nav-cta {
+                display: none
+            }
+
+            .hamburger {
+                display: inline-flex;
+                padding: 8px;
+                border-radius: 10px
+            }
+
+            .mobile-menu {
+                position: fixed;
+                inset: 64px 12px auto 12px;
+                background: var(--panel);
+                border: 1px solid rgba(0, 0, 0, .08);
+                border-radius: 16px;
+                box-shadow: var(--shadow);
+                padding: 14px;
+                display: none;
+                flex-direction: column;
+                gap: 10px
+            }
+
+            .mobile-menu a,
+            .mobile-menu .btn {
+                display: flex
+            }
+
+            .mobile-menu.open {
+                display: flex
+            }
         }
 
+        /* Page layout */
+        main {
+            display: grid;
+            place-items: center;
+            min-height: calc(100vh - 64px);
+            padding: 40px 0
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 560px;
+            background: var(--panel);
+            border: 1px solid rgba(0, 0, 0, .08);
+            border-radius: 18px;
+            box-shadow: var(--shadow-soft);
+            padding: 22px
+        }
+
+        h1 {
+            margin: 4px 0 6px;
+            font-size: 28px
+        }
+
+        p.lead {
+            margin: 0 0 18px;
+            color: var(--muted)
+        }
+
+        /* Form */
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px
+        }
+
+        .field input {
+            background: #fff;
+            border: 1px solid rgba(0, 0, 0, .12);
+            border-radius: 12px;
+            padding: 12px 14px;
+            color: var(--text);
+            outline: none
+        }
+
+        .field input:focus {
+            box-shadow: var(--ring);
+            border-color: transparent
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 8px
+        }
+
+        .helper {
+            text-align: center;
+            color: var(--muted);
+            font-size: 14px;
+            margin-top: 12px
+        }
+
+        /* Alerts */
         .alert {
+            background: #fff3cd;
+            border: 1px solid #ffe69c;
+            color: #664d03;
+            padding: 10px 12px;
             border-radius: 10px;
+            margin-top: 10px
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid rgba(0, 0, 0, .08);
+            padding: 28px 0;
+            color: var(--muted)
         }
     </style>
 </head>
+
 <body>
 
-<header>
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center">
-            <h1 class="h4 mb-0"><a href="index.php">Pos laju</a></h1>
-            <nav>
-                <ul class="nav">
-                    <li class="nav-item"><a class="nav-link" href="index.php">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="index.php">About Us</a></li>
-                    <li class="nav-item"><a class="nav-link" href="index.php">Gallery</a></li>
-                    <li class="nav-item"><a class="nav-link" href="index.php">Contact</a></li>
-                    <?php if (isset($_SESSION['auth'])) : ?>
-                        <li class="nav-item"><a class="nav-link" href="profile.php">Profile</a></li>
-                        <li class="nav-item"><a class="nav-link" href="tracking.php">Tracking</a></li>
-                        <li class="nav-item"><a class="nav-link" href="logout.php">Logout</a></li>
-                    <?php else : ?>
-                        <li class="nav-item"><a class="nav-link" href="login.php">Login</a></li>
-                        <li class="nav-item"><a class="nav-link" href="register.php">Register</a></li>
-                    <?php endif; ?>
-                    <li class="nav-item"><a class="nav-link" href="request.php">Request</a></li>
-                </ul>
+    <!-- Header matches the rest -->
+    <header>
+        <div class="container nav">
+            <a href="index.php" class="brand" aria-label="<?php echo $companyName; ?> Home">
+                <span class="logo" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                        <path d="M3 12h9" />
+                        <path d="M12 6l6 6-6 6" />
+                    </svg>
+                </span>
+                <span><?php echo $companyName; ?></span>
+            </a>
+            <nav class="nav-links" aria-label="Primary">
+                <a href="index.php#services">Services</a>
+                <a href="index.php#about">About</a>
+                <a href="index.php#gallery">Gallery</a>
+                <a href="index.php#contact">Contact</a>
             </nav>
-        </div>
-    </div>
-</header>
 
-<div class="container">
-    <div class="text-center mb-4">
-        <h2>Verify Your OTP</h2>
-        <p class="text-muted">Please enter the OTP sent to your email.</p>
-    </div>
-    <div class="row justify-content-center">
-        <div class="col-md-5">
-            <div class="form-container">
-                <form method="POST" action="verify-otp.php">
-                    <div class="mb-3">
-                        <label class="form-label">Enter OTP Code</label>
-                        <input type="text" name="otpCode" class="form-control" required placeholder="6-digit OTP">
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">Verify OTP</button>
-                    <div class="mt-3 text-center">
-                        <a href="mail/mail.php" class="text-decoration-none">Resend OTP</a>
-                    </div>
-                    <?php if ($message): ?>
-                        <div class="alert alert-warning mt-3"><?= $message; ?></div>
-                    <?php endif; ?>
-                </form>
+            <?php if (isset($_SESSION['auth'])): ?>
+                <div class="nav-cta">
+                    <a class="btn primary" href="request.php">Request</a>
+                    <a class="btn light" href="logout.php">Logout</a>
+                </div>
+            <?php else: ?>
+                <div class="nav-cta">
+                    <a class="btn light" href="login.php">Log in</a>
+                    <a class="btn primary" href="register.php">Register</a>
+                </div>
+            <?php endif; ?>
+
+            <button class="hamburger" aria-label="Open menu" onclick="toggleMenu()">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M3 12h18M3 18h18" />
+                </svg>
+            </button>
+        </div>
+
+        <div id="mobileMenu" class="mobile-menu container" role="dialog" aria-modal="true" aria-label="Mobile menu">
+            <a href="index.php#services" onclick="toggleMenu(false)">Services</a>
+            <a href="index.php#about" onclick="toggleMenu(false)">About</a>
+            <a href="index.php#gallery" onclick="toggleMenu(false)">Gallery</a>
+            <a href="index.php#contact" onclick="toggleMenu(false)">Contact</a>
+            <?php if (isset($_SESSION['auth'])): ?>
+                <a class="btn primary" href="request.php">Request</a>
+                <a class="btn light" href="logout.php">Logout</a>
+            <?php else: ?>
+                <a class="btn light" href="login.php">Log in</a>
+                <a class="btn primary" href="register.php">Register</a>
+            <?php endif; ?>
+        </div>
+    </header>
+
+    <!-- OTP card -->
+    <main>
+        <div class="auth-card">
+            <h1>Verify your OTP</h1>
+            <p class="lead">Please enter the 6-digit code sent to your email.</p>
+
+            <?php if (!empty($message)): ?>
+                <div class="alert"><?= $message; ?></div>
+            <?php endif; ?>
+
+            <form method="POST" action="verify-otp.php" novalidate>
+                <div class="field">
+                    <label for="otpCode">Enter OTP Code</label>
+                    <input id="otpCode" type="text" name="otpCode" required inputmode="numeric" pattern="[0-9]{6}"
+                        placeholder="6-digit OTP" />
+                </div>
+
+                <div class="actions">
+                    <a class="btn" href="login.php">Back</a>
+                    <button type="submit" class="btn primary">Verify OTP</button>
+                </div>
+
+                <div class="helper">
+                    Did not receive the code?
+                    <a href="mail/mail.php" style="text-decoration:underline">Resend OTP</a>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container"
+            style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:10px">
+                <span class="brand" style="gap:8px"><span class="logo"
+                        style="width:28px;height:28px"></span><span><?php echo $companyName; ?></span></span>
+            </div>
+            <div style="display:flex;gap:14px">
+                <a href="index.php#about">About</a>
+                <a href="index.php#services">Services</a>
+                <a href="index.php#contact">Contact</a>
+                <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'})">Back to top</a>
             </div>
         </div>
-    </div>
-</div>
+    </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleMenu(force) {
+            const el = document.getElementById('mobileMenu');
+            const isOpen = typeof force === 'boolean' ? force : !el.classList.contains('open');
+            el.classList.toggle('open', isOpen);
+        }
+    </script>
 </body>
+
 </html>

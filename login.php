@@ -1,210 +1,374 @@
 <?php
 session_start();
-if (isset($_SESSION['auth'])) {  // Use the same session variable
+if (isset($_SESSION['auth'])) {
     header("Location: index.php");
     exit();
 }
+$companyName = "FOJ Express";
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Delivery System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login · <?php echo $companyName; ?></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
+        /* Same design tokens as the landing page (light theme) */
+        :root {
+            --bg: #ffffff;
+            --panel: #f7f9fc;
+            --muted: #556070;
+            --text: #0b0d13;
+            --brand: #2563eb;
+            --brand-2: #06b6d4;
+            --ok: #10b981;
+            --warn: #f59e0b;
+            --danger: #ef4444;
+            --ring: 0 0 0 3px rgba(37, 99, 235, .25);
+            --radius: 14px;
+            --shadow: 0 8px 24px rgba(0, 0, 0, .12), 0 2px 8px rgba(0, 0, 0, .08);
+            --shadow-soft: 0 6px 18px rgba(0, 0, 0, .08), inset 0 1px 0 rgba(255, 255, 255, .6);
+            --grid-max: 1200px;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html,
         body {
-            background: url('Admin/assets/images/logo/background2.png') no-repeat center center fixed;
-            background-size: cover;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            min-height: 100vh;
-            position: relative;
+            margin: 0;
+            padding: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif
         }
 
-        .header-nav {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-        }
-
-        .nav-button {
-            background-color: transparent;
-            border: 2px solid #ffffff;
-            color: #ffffff;
-            padding: 8px 20px;
-            margin: 0 5px;
-            border-radius: 25px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            text-decoration: none;
-        }
-
-        .nav-button:hover {
-            background-color: #ffffff;
-            color: #000000;
-            transform: translateY(-2px);
-        }
-
-        .nav-button.active {
-            background-color: #ffffff;
-            color: #000000;
-        }
-
-        .logo {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1000;
-            color: #ffffff;
-            font-size: 24px;
-            font-weight: bold;
-            text-decoration: none;
+        a {
+            color: inherit;
+            text-decoration: none
         }
 
         .container {
-            padding-top: 100px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .form-container {
-            background-color: rgba(255, 255, 255, 0.95);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
-            max-width: 600px;
+            max-width: var(--grid-max);
             margin: 0 auto;
+            padding: 0 20px
         }
 
-        .form-control {
-            border: 2px solid #eee;
-            border-radius: 15px;
-            padding: 12px 20px;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
+        /* Header / Nav copied from landing page */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(255, 255, 255, .85);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, .08)
         }
 
-        .form-control:focus {
-            border-color: #4F6480;
-            box-shadow: 0 0 0 0.2rem rgba(79, 100, 128, 0.25);
+        .nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px
         }
 
-        .form-label {
-            font-weight: 500;
-            margin-bottom: 8px;
-            color: #333;
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            letter-spacing: .2px
         }
 
-        .btn-primary {
-            background-color: #4F6480;
-            border: none;
-            border-radius: 15px;
-            padding: 12px 30px;
+        .brand .logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--brand), var(--brand-2));
+            display: grid;
+            place-items: center;
+            box-shadow: var(--shadow-soft)
+        }
+
+        .brand .logo svg {
+            width: 22px;
+            height: 22px
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 22px
+        }
+
+        .nav-cta {
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid rgba(0, 0, 0, .12);
+            padding: 10px 14px;
+            border-radius: 12px;
+            background: transparent;
+            color: var(--text);
             font-weight: 600;
-            transition: all 0.3s ease;
+            transition: .2s ease
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            border-color: rgba(0, 0, 0, .22)
+        }
+
+        .btn.primary {
+            background: linear-gradient(135deg, var(--brand), var(--brand-2));
+            border: none;
+            color: white;
+            box-shadow: var(--shadow)
+        }
+
+        .btn.light {
+            background: rgba(0, 0, 0, .06)
+        }
+
+        .hamburger {
+            display: none;
+            background: transparent;
+            border: none;
+            color: var(--text)
+        }
+
+        .mobile-menu {
+            display: none
+        }
+
+        @media (max-width:980px) {
+            .nav-links {
+                display: none
+            }
+
+            .nav-cta {
+                display: none
+            }
+
+            .hamburger {
+                display: inline-flex;
+                padding: 8px;
+                border-radius: 10px
+            }
+
+            .mobile-menu {
+                position: fixed;
+                inset: 64px 12px auto 12px;
+                background: var(--panel);
+                border: 1px solid rgba(0, 0, 0, .08);
+                border-radius: 16px;
+                box-shadow: var(--shadow);
+                padding: 14px;
+                display: none;
+                flex-direction: column;
+                gap: 10px
+            }
+
+            .mobile-menu a,
+            .mobile-menu .btn {
+                display: flex
+            }
+
+            .mobile-menu.open {
+                display: flex
+            }
+        }
+
+        /* Page layout */
+        main {
+            display: grid;
+            place-items: center;
+            min-height: calc(100vh - 64px);
+            padding: 40px 0
+        }
+
+        .auth-card {
             width: 100%;
-            margin-top: 20px;
+            max-width: 560px;
+            background: var(--panel);
+            border: 1px solid rgba(0, 0, 0, .08);
+            border-radius: 18px;
+            box-shadow: var(--shadow-soft);
+            padding: 22px
         }
 
-        .btn-primary:hover {
-            background-color: #2D3864;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        h1 {
+            margin: 4px 0 6px;
+            font-size: 28px
         }
 
-        .page-title {
-            color: #333;
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 10px;
+        p.lead {
+            margin: 0 0 18px;
+            color: var(--muted)
+        }
+
+        /* Form */
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px
+        }
+
+        .field input {
+            background: #fff;
+            border: 1px solid rgba(0, 0, 0, .12);
+            border-radius: 12px;
+            padding: 12px 14px;
+            color: var(--text);
+            outline: none
+        }
+
+        .field input:focus {
+            box-shadow: var(--ring);
+            border-color: transparent
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 8px
+        }
+
+        .helper {
             text-align: center;
+            color: var(--muted);
+            font-size: 14px;
+            margin-top: 12px
         }
 
-        .page-subtitle {
-            color: #666;
-            font-size: 16px;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        @media (max-width: 768px) {
-            .header-nav {
-                top: 10px;
-                right: 10px;
-            }
-            
-            .nav-button {
-                padding: 6px 15px;
-                font-size: 14px;
-            }
-            
-            .form-container {
-                padding: 20px;
-                margin: 10px;
-            }
-            
-            .container {
-                padding-top: 80px;
-            }
+        /* Footer */
+        footer {
+            border-top: 1px solid rgba(0, 0, 0, .08);
+            padding: 28px 0;
+            color: var(--muted)
         }
     </style>
 </head>
+
 <body>
-    <a href="index.php" class="logo">Pos Laju</a>
-    
-    <nav class="header-nav">
-        <a href="index.php" class="nav-button">Home</a>
-        <a href="index.php #section-about" class="nav-button">About Us</a>
-        <a href="gallery.php" class="nav-button">Gallery</a>
-        <a href="contact.php" class="nav-button">Contact</a>
-        <?php if (isset($_SESSION['auth'])) : ?>
-            <a href="profile.php" class="nav-button">Profile</a>
-            <a href="tracking.php" class="nav-button">Tracking</a>
-            <a href="logout.php" class="nav-button">Logout</a>
-        <?php else : ?>
-            <a href="login.php" class="nav-button active">Login</a>
-            <a href="register.php" class="nav-button">Register</a>
-        <?php endif; ?>
-        <a href="request.php" class="nav-button">Request</a>
-    </nav>
 
-    <div class="container">
-        <div class="form-container">
-            <h1 class="page-title">Login</h1>
-            <p class="page-subtitle">Please enter your credentials to login.</p>
-            
-            <form action="code.php" method="POST">
-                <div class="mb-3">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" name="email" class="form-control" required placeholder="Enter your email">
+    <!-- Header matches landing -->
+    <header>
+        <div class="container nav">
+            <a href="index.php" class="brand" aria-label="<?php echo $companyName; ?> Home">
+                <span class="logo" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                        <path d="M3 12h9" />
+                        <path d="M12 6l6 6-6 6" />
+                    </svg>
+                </span>
+                <span><?php echo $companyName; ?></span>
+            </a>
+            <nav class="nav-links" aria-label="Primary">
+                <a href="index.php#services">Services</a>
+                <a href="index.php#about">About</a>
+                <a href="index.php#gallery">Gallery</a>
+                <a href="index.php#contact">Contact</a>
+            </nav>
+            <div class="nav-cta">
+                <a class="btn light" href="login.php">Log in</a>
+                <a class="btn primary" href="register.php">Register</a>
+            </div>
+            <button class="hamburger" aria-label="Open menu" onclick="toggleMenu()">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M3 12h18M3 18h18" />
+                </svg>
+            </button>
+        </div>
+        <div id="mobileMenu" class="mobile-menu container" role="dialog" aria-modal="true" aria-label="Mobile menu">
+            <a href="index.php#services" onclick="toggleMenu(false)">Services</a>
+            <a href="index.php#about" onclick="toggleMenu(false)">About</a>
+            <a href="index.php#gallery" onclick="toggleMenu(false)">Gallery</a>
+            <a href="index.php#contact" onclick="toggleMenu(false)">Contact</a>
+            <a class="btn light" href="login.php">Log in</a>
+            <a class="btn primary" href="register.php">Register</a>
+        </div>
+    </header>
+
+    <!-- Auth card -->
+    <main>
+        <div class="auth-card">
+            <h1>Login</h1>
+            <p class="lead">Please enter your credentials to continue.</p>
+
+            <?php if (isset($_SESSION['status'])): ?>
+                <div
+                    style="background:#fff3cd;border:1px solid #ffe69c;color:#664d03;padding:10px 12px;border-radius:10px;margin-bottom:10px;">
+                    <?= $_SESSION['status'];
+                    unset($_SESSION['status']); ?>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Password</label>
-                    <input type="password" name="password" class="form-control" required placeholder="Enter your password">
+            <?php endif; ?>
+
+            <form action="code.php" method="POST" novalidate>
+                <div class="field">
+                    <label for="email">Email Address</label>
+                    <input id="email" type="email" name="email" required placeholder="you@example.com" />
+                </div>
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input id="password" type="password" name="password" required placeholder="••••••••" />
                 </div>
 
-                <!-- reCAPTCHA Widget -->
-                <div class="mb-3">
+                <div class="field">
                     <div class="g-recaptcha" data-sitekey="6Le407cqAAAAALOot4V59zIHTXeBJilaqE3twlQQ"></div>
                 </div>
 
-                <button type="submit" name="login_btn" class="btn btn-primary">Login</button>
-                
-                <div class="mt-3 text-center">
-                    <p>Don't have an account? <a href="register.php" style="color: #4F6480;">Sign Up</a> or go back to the <a href="index.php" style="color: #4F6480;">Home</a></p>
+                <div class="actions">
+                    <a class="btn" href="index.php">Back</a>
+                    <button type="submit" name="login_btn" class="btn primary">Login</button>
+                </div>
+
+                <div class="helper">
+                    Do not have an account?
+                    <a href="register.php" style="text-decoration:underline">Register</a>
                 </div>
             </form>
-            
-            <?php if (isset($_SESSION['status'])): ?>
-                <div class="alert alert-warning mt-3"><?= $_SESSION['status']; unset($_SESSION['status']); ?></div>
-            <?php endif; ?>
         </div>
-    </div>
+    </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <footer>
+        <div class="container"
+            style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:10px">
+                <span class="brand" style="gap:8px"><span class="logo"
+                        style="width:28px;height:28px"></span><span><?php echo $companyName; ?></span></span>
+            </div>
+            <div style="display:flex;gap:14px">
+                <a href="index.php#about">About</a>
+                <a href="index.php#services">Services</a>
+                <a href="index.php#contact">Contact</a>
+                <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'})">Back to top</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function toggleMenu(force) {
+            const el = document.getElementById('mobileMenu');
+            const isOpen = typeof force === 'boolean' ? force : !el.classList.contains('open');
+            el.classList.toggle('open', isOpen);
+        }
+    </script>
 </body>
+
 </html>

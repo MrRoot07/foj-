@@ -11,7 +11,7 @@
                 <div class="sidebar-header">
                     <div class="d-flex justify-content-between mt-0 px-2">
 
-                        <h1 class="mb-0"><a href="index.php" class="text-warning h5 mb-0 px-2 ">Pos laju </a></h1>
+                        <h1 class="mb-0"><a href="index.php" class="text-warning h5 mb-0 px-2 ">FOJ Express </a></h1>
 
                     </div>
                 </div>
@@ -49,7 +49,7 @@
                                 <span>Message</span>
                             </a>
                         </li>
-                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin') : ?>
+                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin'): ?>
                             <li class="sidebar-item">
                                 <a href="branch.php" class='sidebar-link'>
                                     <i class="bi bi-columns"></i>
@@ -63,7 +63,7 @@
                                 <span>Employee </span>
                             </a>
                         </li>
-                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin') : ?>
+                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin'): ?>
                             <li class="sidebar-item">
                                 <a href="area.php" class='sidebar-link'>
                                     <i class="bi bi-geo-alt-fill"></i>
@@ -134,7 +134,9 @@
                                             <td><?php echo $row['date_updated']; ?></td>
                                             <td>
 
-                                                <button type="button" onclick="permenantdeleteData(<?php echo $row['contact_id']; ?>, 'contact', 'contact_id' )" class="btn btn-darkblue"> <i class="fa-solid fa-trash"></i>
+                                                <button type="button"
+                                                    onclick="permenantdeleteData(<?php echo $row['contact_id']; ?>, 'contact', 'contact_id' )"
+                                                    class="btn btn-darkblue"> <i class="fa-solid fa-trash"></i>
                                                 </button>
                                             </td>
                                         </tr>

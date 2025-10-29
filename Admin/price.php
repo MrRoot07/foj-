@@ -11,7 +11,7 @@
                 <div class="sidebar-header">
                     <div class="d-flex justify-content-between mt-0 px-2">
 
-                        <h1 class="mb-0"><a href="index.php" class="text-warning h5 mb-0 px-2 ">Pos laju </a></h1>
+                        <h1 class="mb-0"><a href="index.php" class="text-warning h5 mb-0 px-2 ">FOJ Express </a></h1>
 
                     </div>
                 </div>
@@ -49,7 +49,7 @@
                                 <span>Message</span>
                             </a>
                         </li>
-                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin') : ?>
+                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin'): ?>
                             <li class="sidebar-item">
                                 <a href="branch.php" class='sidebar-link'>
                                     <i class="bi bi-columns"></i>
@@ -63,7 +63,7 @@
                                 <span>Employee </span>
                             </a>
                         </li>
-                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin') : ?>
+                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin'): ?>
                             <li class="sidebar-item">
                                 <a href="area.php" class='sidebar-link'>
                                     <i class="bi bi-geo-alt-fill"></i>
@@ -144,35 +144,50 @@
 
 
                                         <tr>
-                                            <td><select onchange="updateData(this, '<?php echo $price_id; ?>', 'start_area', 'price_table', 'price_id');" id="start_area <?php echo $price_id; ?>" class='form-control norad tx12' name="start_area" type='text'>
+                                            <td><select
+                                                    onchange="updateData(this, '<?php echo $price_id; ?>', 'start_area', 'price_table', 'price_id');"
+                                                    id="start_area <?php echo $price_id; ?>" class='form-control norad tx12'
+                                                    name="start_area" type='text'>
                                                     <?php
                                                     $getallCat = getAllArea();
                                                     while ($row2 = mysqli_fetch_assoc($getallCat)) { ?>
 
-                                                        <option value="<?php echo $row2['area_id']; ?>" <?php if ($row['start_area'] == $row2['area_id']) echo "selected"; ?>>
-                                                            <?php echo $row2['area_name']; ?></option>
+                                                        <option value="<?php echo $row2['area_id']; ?>" <?php if ($row['start_area'] == $row2['area_id'])
+                                                               echo "selected"; ?>>
+                                                            <?php echo $row2['area_name']; ?>
+                                                        </option>
                                                     <?php } ?>
                                                 </select>
                                             </td>
 
-                                            <td><select onchange="updateData(this, '<?php echo $price_id; ?>', 'end_area', 'price_table', 'price_id');" id="end_area <?php echo $price_id; ?>" class='form-control norad tx12' name="end_area" type='text'>
+                                            <td><select
+                                                    onchange="updateData(this, '<?php echo $price_id; ?>', 'end_area', 'price_table', 'price_id');"
+                                                    id="end_area <?php echo $price_id; ?>" class='form-control norad tx12'
+                                                    name="end_area" type='text'>
                                                     <?php
                                                     $getallCat = getAllArea();
                                                     while ($row2 = mysqli_fetch_assoc($getallCat)) { ?>
 
-                                                        <option value="<?php echo $row2['area_id']; ?>" <?php if ($row['end_area'] == $row2['area_id']) echo "selected"; ?>>
-                                                            <?php echo $row2['area_name']; ?></option>
+                                                        <option value="<?php echo $row2['area_id']; ?>" <?php if ($row['end_area'] == $row2['area_id'])
+                                                               echo "selected"; ?>>
+                                                            <?php echo $row2['area_name']; ?>
+                                                        </option>
                                                     <?php } ?>
                                                 </select>
                                             </td>
 
                                             <td>
-                                                <input type="number" id="price" name="price" required="required" onchange="updateData(this, '<?php echo $price_id; ?>', 'price', 'price_table', 'price_id');" value="<?php echo $row['price']; ?>" class="form-control col-md-7 col-xs-12">
+                                                <input type="number" id="price" name="price" required="required"
+                                                    onchange="updateData(this, '<?php echo $price_id; ?>', 'price', 'price_table', 'price_id');"
+                                                    value="<?php echo $row['price']; ?>"
+                                                    class="form-control col-md-7 col-xs-12">
                                             </td>
                                             <td><?php echo $row['date_updated']; ?></td>
                                             <td>
 
-                                                <button type="button" onclick="deleteData(<?php echo $row['price_id']; ?>, 'price_table', 'price_id')" class="btn btn-darkblue"> <i class="fa-solid fa-trash"></i>
+                                                <button type="button"
+                                                    onclick="deleteData(<?php echo $row['price_id']; ?>, 'price_table', 'price_id')"
+                                                    class="btn btn-darkblue"> <i class="fa-solid fa-trash"></i>
                                                 </button>
 
                                             </td>
@@ -231,7 +246,8 @@
 
                             <div class="col-md-12 mt-2">
                                 <label for="price" class="form-label">Price</label>
-                                <input type="text" class="form-control" name="price" id="price" placeholder="Price" required>
+                                <input type="text" class="form-control" name="price" id="price" placeholder="Price"
+                                    required>
                             </div>
                     </div>
                     <div class="modal-footer">

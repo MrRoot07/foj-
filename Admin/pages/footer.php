@@ -4,7 +4,7 @@
             <p></a> &copy;
                 <script>
                     document.write(new Date().getFullYear())
-                </script>. Pos laju.
+                </script>. FOJ Express.
                 All Right Reserved.
             </p>
         </div>

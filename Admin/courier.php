@@ -11,7 +11,8 @@
                 <div class="sidebar-header">
                     <div class="d-flex justify-content-between mt-0 px-2">
 
-                        <h1 class="mb-0"><a href="index.php" class="text-warning h5 mb-0 px-2 ">Pos laju </a></h1>
+                        <h1 class="mb-0"><a href="index.php" class="text-warning h5 mb-0 px-2 ">FOJ Express </a></h1>
+
 
                     </div>
                 </div>
@@ -49,7 +50,7 @@
                                 <span>Message</span>
                             </a>
                         </li>
-                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin') : ?>
+                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin'): ?>
                             <li class="sidebar-item">
                                 <a href="branch.php" class='sidebar-link'>
                                     <i class="bi bi-columns"></i>
@@ -63,7 +64,7 @@
                                 <span>Employee </span>
                             </a>
                         </li>
-                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin') : ?>
+                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin'): ?>
                             <li class="sidebar-item">
                                 <a href="area.php" class='sidebar-link'>
                                     <i class="bi bi-geo-alt-fill"></i>
@@ -127,7 +128,7 @@
 
                 while ($row = mysqli_fetch_assoc($getall)) {
                     $request_id = $row['request_id'];
-                ?>
+                    ?>
                     <article class="card mt-5" style="border: 2px solid #2c3e50">
                         <header class="card-header text-white" style="background-color: #2c3e50; border-radius: 0px;">
                             Orders /
@@ -193,26 +194,26 @@
                                 <div class="track">
 
                                     <div class="step <?php if ($row['tracking_status'] == 1 || $row['tracking_status'] == 2 || $row['tracking_status'] == 3 || $row['tracking_status'] == 4) {
-                                                            echo 'active';
-                                                        } ?>">
+                                        echo 'active';
+                                    } ?>">
                                         <span class="icon"> <i class="fa fa-check"></i> </span>
                                         <span class="text">Order confirmed</span>
                                     </div>
                                     <div class="step <?php if ($row['tracking_status'] == 2 || $row['tracking_status'] == 3 || $row['tracking_status'] == 4) {
-                                                            echo 'active';
-                                                        } ?>">
+                                        echo 'active';
+                                    } ?>">
                                         <span class="icon"> <i class="fa fa-user"></i> </span>
                                         <span class="text">Prepare Order</span>
                                     </div>
                                     <div class="step <?php if ($row['tracking_status'] == 3 || $row['tracking_status'] == 4) {
-                                                            echo 'active';
-                                                        } ?>">
+                                        echo 'active';
+                                    } ?>">
                                         <span class="icon"> <i class="fa fa-truck"></i> </span>
                                         <span class="text"> Shipped Order </span>
                                     </div>
                                     <div class="step <?php if ($row['tracking_status'] == 4) {
-                                                            echo 'active';
-                                                        } ?>">
+                                        echo 'active';
+                                    } ?>">
                                         <span class="icon"> <i class="fa fa-box"></i> </span>
                                         <span class="text">Deliverd</span>
                                     </div>
@@ -224,27 +225,37 @@
 
                                 <div class="col-md-5">
                                     <label for="tracking_status" class="form-label">Order Status</label>
-                                    <select onchange='updateData(this, "<?php echo $request_id; ?>","tracking_status", "request", "request_id")' id="tracking_status <?php echo $request_id; ?>" class='form-control norad tx12' name="tracking_status" type='text'>
-                                        <option value="1" <?php if ($row['tracking_status'] == "1") echo "selected"; ?>>
+                                    <select
+                                        onchange='updateData(this, "<?php echo $request_id; ?>","tracking_status", "request", "request_id")'
+                                        id="tracking_status <?php echo $request_id; ?>" class='form-control norad tx12'
+                                        name="tracking_status" type='text'>
+                                        <option value="1" <?php if ($row['tracking_status'] == "1")
+                                            echo "selected"; ?>>
                                             Order Pending
                                         </option>
-                                        <option value="2" <?php if ($row['tracking_status'] == "2") echo "selected"; ?>>
+                                        <option value="2" <?php if ($row['tracking_status'] == "2")
+                                            echo "selected"; ?>>
                                             Prepare Order
                                         </option>
-                                        <option value="3" <?php if ($row['tracking_status'] == "3") echo "selected"; ?>>
+                                        <option value="3" <?php if ($row['tracking_status'] == "3")
+                                            echo "selected"; ?>>
                                             Shipped Order
                                         </option>
-                                        <option value="4" <?php if ($row['tracking_status'] == "4") echo "selected"; ?>>
+                                        <option value="4" <?php if ($row['tracking_status'] == "4")
+                                            echo "selected"; ?>>
                                             Deliverd
                                         </option>
-                                        <option value="5" <?php if ($row['tracking_status'] == "5") echo "selected"; ?>>
+                                        <option value="5" <?php if ($row['tracking_status'] == "5")
+                                            echo "selected"; ?>>
                                             Canceled
                                         </option>
                                     </select>
                                 </div>
                                 <div class="col-md-4">
                                     <label for="tracking_status" class="form-label">Order Delete : </label>
-                                    <button type="button" onclick="deleteData(<?php echo $row['request_id']; ?>,'request', 'request_id')" class="btn btn-darkblue"> <i class="fa-solid fa-trash"></i>
+                                    <button type="button"
+                                        onclick="deleteData(<?php echo $row['request_id']; ?>,'request', 'request_id')"
+                                        class="btn btn-darkblue"> <i class="fa-solid fa-trash"></i>
                                     </button>
                                 </div>
 

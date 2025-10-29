@@ -79,7 +79,7 @@ $otp = generateOTP($phone);
         $phpmailer->Password = 'mfaenrelmrtztlxu';
         $phpmailer->isHTML(true); // Set email format to HTML
         $phpmailer->CharSet = "UTF-8";
-        $phpmailer->setFrom('sultanssparesort@gmail.com', 'SULTANS SPA RESORT');
+        $phpmailer->setFrom('sultanssparesort@gmail.com', 'FOJ Express');
         $phpmailer->addAddress($email); // Add recipient
         $phpmailer->Subject = 'Verification Code';
         $phpmailer->Body = '

@@ -11,7 +11,7 @@
                 <div class="sidebar-header">
                     <div class="d-flex justify-content-between mt-0 px-2">
 
-                        <h1 class="mb-0"><a href="index.php" class="text-warning h5 mb-0 px-2 ">Pos laju </a></h1>
+                        <h1 class="mb-0"><a href="index.php" class="text-warning h5 mb-0 px-2 ">FOJ Express </a></h1>
 
 
                     </div>
@@ -50,7 +50,7 @@
                                 <span>Message</span>
                             </a>
                         </li>
-                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin') : ?>
+                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin'): ?>
                             <li class="sidebar-item">
                                 <a href="branch.php" class='sidebar-link'>
                                     <i class="bi bi-columns"></i>
@@ -64,7 +64,7 @@
                                 <span>Employee </span>
                             </a>
                         </li>
-                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin') : ?>
+                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin'): ?>
                             <li class="sidebar-item">
                                 <a href="area.php" class='sidebar-link'>
                                     <i class="bi bi-geo-alt-fill"></i>
@@ -141,7 +141,7 @@
 
                                     while ($row = mysqli_fetch_assoc($getall)) {
                                         $customer_id = $row['customer_id'];
-                                    ?>
+                                        ?>
 
 
                                         <tr>
@@ -152,12 +152,14 @@
                                             <td><?php echo $row['nic']; ?></td>
                                             <td><?php echo $row['address']; ?></td>
                                             <td><?php if ($row['gender'] == "1") {
-                                                    echo "Male";
-                                                } else {
-                                                    echo "Female";
-                                                } ?>
+                                                echo "Male";
+                                            } else {
+                                                echo "Female";
+                                            } ?>
                                             </td>
-                                            <td> <button type="button" onclick="deleteData(<?php echo $row['customer_id']; ?>,'customer', 'customer_id')" class="btn btn-darkblue"> <i class="fa-solid fa-trash"></i>
+                                            <td> <button type="button"
+                                                    onclick="deleteData(<?php echo $row['customer_id']; ?>,'customer', 'customer_id')"
+                                                    class="btn btn-darkblue"> <i class="fa-solid fa-trash"></i>
                                                 </button>
 
                                             </td>

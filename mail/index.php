@@ -78,12 +78,12 @@ $phpmailer->isHTML(true);                               // Set email format to H
 $phpmailer->CharSet = "UTF-8";                          // Support for Arabic language
 
 //Recipients
-$phpmailer->setFrom('sultanssparesort@gmail.com', 'Pos Laju Malaysia');
+$phpmailer->setFrom('sultanssparesort@gmail.com', 'FOJ Express');
 $phpmailer->addAddress($email);                         // Add recipient
 $phpmailer->Subject = 'Verification Code';
 $phpmailer->Body    =
     '<div style="margin:10 auto; text-align:center">
-         <p>Email Verification for Your Account in Pos Laju Malaysia </p>
+         <p>Email Verification for Your Account in FOJ Express </p>
     
     <h4>Your Code:</h4>
     <h1>' . $otp . '</h1>
