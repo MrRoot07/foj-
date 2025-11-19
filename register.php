@@ -1,13 +1,17 @@
 <?php
 session_start();
+// Include i18n bootstrap
+require_once __DIR__ . '/bootstrap/i18n.php';
 if (isset($_SESSION['auth'])) {
     header("Location: index.php");
     exit();
 }
 $companyName = "FOJ Express";
+$current_lang = get_current_lang();
+$is_rtl = is_rtl();
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo $current_lang; ?>" dir="<?php echo $is_rtl ? 'rtl' : 'ltr'; ?>">
 
 <head>
     <meta charset="UTF-8" />
@@ -17,6 +21,9 @@ $companyName = "FOJ Express";
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
+    <?php if ($is_rtl): ?>
+    <link rel="stylesheet" href="css/rtl.css">
+    <?php endif; ?>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
         /* Design tokens: same as landing & login (light theme) */
@@ -299,68 +306,129 @@ $companyName = "FOJ Express";
             align-items: center;
         }
 
-        .show-pass {
-            position: absolute;
-            right: 12px;
-            background: none;
-            border: none;
-            font-size: 13px;
-            cursor: pointer;
-            color: var(--brand);
-            font-weight: 600;
+        .password-requirements {
+            margin-top: 12px;
+            padding: 0;
+            background: transparent;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 20px;
         }
 
-        .show-pass:hover {
-            opacity: .8;
+        .requirement {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 0;
+            font-size: 12px;
+            color: #6c757d;
+            transition: all 0.3s ease;
+        }
+
+        @media (max-width: 720px) {
+            .password-requirements {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .requirement.met {
+            color: #28a745;
+        }
+
+        .req-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #e9ecef;
+            color: #6c757d;
+            font-size: 12px;
+            font-weight: normal;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .requirement.met .req-icon {
+            background: #28a745;
+            color: #ffffff;
+        }
+
+        .requirement.met .req-icon::before {
+            content: "✓";
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .requirement:not(.met) .req-icon::before {
+            content: "";
+        }
+
+        .requirement:not(.met) .req-icon {
+            border: 2px solid #dee2e6;
+            background: #ffffff;
+        }
+
+        .req-text {
+            flex: 1;
+            line-height: 1.5;
+        }
+
+        .personal-section,
+        .address-section,
+        .password-section {
+            margin: 24px 0;
+            padding: 20px;
+            background: rgba(37, 99, 235, 0.03);
+            border: 1px solid rgba(37, 99, 235, 0.1);
+            border-radius: 12px;
+        }
+
+        .personal-section h3,
+        .address-section h3,
+        .password-section h3 {
+            margin: 0 0 16px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .personal-section h3::before {
+            content: "👤";
+            font-size: 18px;
+        }
+
+        .address-section h3::before {
+            content: "📍";
+            font-size: 18px;
+        }
+
+        .password-section h3::before {
+            content: "🔒";
+            font-size: 18px;
+        }
+
+        .personal-section .grid,
+        .address-section .grid,
+        .password-section .grid {
+            margin-top: 0;
         }
     </style>
 </head>
 
 <body>
 
-    <!-- Header -->
-    <header>
-        <div class="container nav">
-            <a href="index.php" class="brand" aria-label="<?php echo $companyName; ?> Home">
-                <span class="logo" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                        <path d="M3 12h9" />
-                        <path d="M12 6l6 6-6 6" />
-                    </svg>
-                </span>
-                <span><?php echo $companyName; ?></span>
-            </a>
-            <nav class="nav-links" aria-label="Primary">
-                <a href="index.php#services">Services</a>
-                <a href="index.php#about">About</a>
-                <a href="index.php#gallery">Gallery</a>
-                <a href="index.php#contact">Contact</a>
-            </nav>
-            <div class="nav-cta">
-                <a class="btn light" href="login.php">Log in</a>
-                <a class="btn primary" href="register.php">Register</a>
-            </div>
-            <button class="hamburger" aria-label="Open menu" onclick="toggleMenu()">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 6h18M3 12h18M3 18h18" />
-                </svg>
-            </button>
-        </div>
-        <div id="mobileMenu" class="mobile-menu container" role="dialog" aria-modal="true" aria-label="Mobile menu">
-            <a href="index.php#services" onclick="toggleMenu(false)">Services</a>
-            <a href="index.php#about" onclick="toggleMenu(false)">About</a>
-            <a href="index.php#gallery" onclick="toggleMenu(false)">Gallery</a>
-            <a href="index.php#contact" onclick="toggleMenu(false)">Contact</a>
-            <a class="btn light" href="login.php">Log in</a>
-            <a class="btn primary" href="register.php">Register</a>
-        </div>
-    </header>
+    <?php include 'pages/header.php'; ?>
 
     <!-- Register card -->
     <main>
         <div class="auth-card">
-            <h1>Create your account</h1>
-            <p class="lead">Join <?php echo $companyName; ?> and start managing your deliveries.</p>
+            <h1><?php __e('register_title'); ?></h1>
+            <p class="lead"><?php __e('register_desc'); ?></p>
 
             <?php if (isset($_SESSION['status'])): ?>
                 <div class="alert"><?= $_SESSION['status'];
@@ -368,53 +436,111 @@ $companyName = "FOJ Express";
             <?php endif; ?>
 
             <form action="code.php" method="POST" novalidate>
+                <div class="personal-section">
+                    <h3><?php __e('register_personal_info'); ?></h3>
                 <div class="grid">
                     <div class="field">
-                        <label for="name">Full Name</label>
+                            <label for="name"><?php __e('register_full_name'); ?></label>
                         <input id="name" type="text" name="name" required placeholder="Jane Doe" />
                     </div>
                     <div class="field">
-                        <label for="nic">Passport Number</label>
+                            <label for="nic"><?php __e('register_passport'); ?></label>
                         <input id="nic" type="text" name="nic" required placeholder="A123456789" />
                     </div>
                     <div class="field">
-                        <label for="phone">Phone Number</label>
+                            <label for="phone"><?php __e('register_phone'); ?></label>
                         <input id="phone" type="text" name="phone" required placeholder="+60 12 345 6789" />
                     </div>
                     <div class="field">
-                        <label for="email">Email Address</label>
+                            <label for="email"><?php __e('register_email'); ?></label>
                         <input id="email" type="email" name="email" required placeholder="you@example.com" />
                     </div>
                     <div class="field">
-                        <label for="gender">Gender</label>
+                            <label for="gender"><?php __e('register_gender'); ?></label>
                         <select id="gender" name="gender" required>
-                            <option value="">Select Gender</option>
-                            <option value="1">Male</option>
-                            <option value="2">Female</option>
+                                <option value=""><?php __e('register_gender_select'); ?></option>
+                                <option value="1"><?php __e('register_gender_male'); ?></option>
+                                <option value="2"><?php __e('register_gender_female'); ?></option>
                         </select>
                     </div>
-                    <div class="field">
-                        <label for="address">Address</label>
-                        <input id="address" type="text" name="address" required placeholder="123 Street, City" />
                     </div>
+                </div>
+
+                <div class="address-section">
+                    <h3><?php __e('register_address_info'); ?></h3>
+                    <div class="grid">
+                        <div class="field">
+                            <label for="street"><?php __e('register_street'); ?></label>
+                            <input id="street" type="text" name="street" required placeholder="123 Main Street" />
+                        </div>
+                        <div class="field">
+                            <label for="city"><?php __e('register_city'); ?></label>
+                            <input id="city" type="text" name="city" required placeholder="City Name" />
+                        </div>
+                        <div class="field">
+                            <label for="state"><?php __e('register_state'); ?></label>
+                            <input id="state" type="text" name="state" required placeholder="State or Province" />
+                        </div>
+                    <div class="field">
+                            <label for="zip_code"><?php __e('register_zip'); ?></label>
+                            <input id="zip_code" type="text" name="zip_code" required placeholder="12345" />
+                        </div>
+                        <div class="field" style="grid-column: 1 / -1;">
+                            <label for="additional_address"><?php __e('register_additional'); ?></label>
+                            <input id="additional_address" type="text" name="additional_address" placeholder="Apartment, suite, unit, building, floor, etc." />
+                        </div>
+                    </div>
+                    </div>
+
+                <div class="password-section">
+                    <h3><?php __e('register_password'); ?></h3>
+                    <div class="grid">
                     <div class="field password-field">
-                        <label for="password">Password</label>
+                            <label for="password"><?php __e('register_password'); ?></label>
                         <div class="pass-wrapper">
-                            <input id="password" type="password" name="password" required placeholder="••••••••" />
-                            <button type="button" class="show-pass"
-                                onclick="togglePassword('password', this)">Show</button>
+                                <input id="password" type="password" name="password" required placeholder="••••••••" oninput="checkPasswordStrength()" />
                         </div>
                     </div>
 
                     <div class="field password-field">
-                        <label for="cpassword">Confirm Password</label>
+                            <label for="cpassword"><?php __e('register_confirm_password'); ?></label>
                         <div class="pass-wrapper">
                             <input id="cpassword" type="password" name="cpassword" required placeholder="••••••••" />
-                            <button type="button" class="show-pass"
-                                onclick="togglePassword('cpassword', this)">Show</button>
                         </div>
                     </div>
 
+                        <div class="field" style="grid-column: 1 / -1; display: flex; justify-content: center; padding-top: 0; margin-top: -8px;">
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin: 0;">
+                                <input type="checkbox" id="show-passwords" onchange="togglePasswords()" style="width: 14px; height: 14px; cursor: pointer; margin: 0;">
+                                <span style="font-size: 13px;"><?php __e('register_show_passwords'); ?></span>
+                            </label>
+                        </div>
+
+                        <div class="field" style="grid-column: 1 / -1;">
+                            <div class="password-requirements">
+                                <div class="requirement" id="req-length">
+                                    <span class="req-icon"></span>
+                                    <span class="req-text"><?php __e('register_password_req_length'); ?></span>
+                                </div>
+                                <div class="requirement" id="req-uppercase">
+                                    <span class="req-icon"></span>
+                                    <span class="req-text"><?php __e('register_password_req_upper'); ?></span>
+                                </div>
+                                <div class="requirement" id="req-lowercase">
+                                    <span class="req-icon"></span>
+                                    <span class="req-text"><?php __e('register_password_req_lower'); ?></span>
+                                </div>
+                                <div class="requirement" id="req-number">
+                                    <span class="req-icon"></span>
+                                    <span class="req-text"><?php __e('register_password_req_number'); ?></span>
+                                </div>
+                                <div class="requirement" id="req-special">
+                                    <span class="req-icon"></span>
+                                    <span class="req-text"><?php __e('register_password_req_special'); ?></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="field">
@@ -422,13 +548,13 @@ $companyName = "FOJ Express";
                 </div>
 
                 <div class="actions">
-                    <a class="btn" href="index.php">Back</a>
-                    <button type="submit" name="reg_btn" class="btn primary">Register</button>
+                    <a class="btn" href="index.php"><?php __e('back'); ?></a>
+                    <button type="submit" name="reg_btn" class="btn primary"><?php __e('nav_register'); ?></button>
                 </div>
 
                 <div class="helper">
-                    Already have an account?
-                    <a href="login.php" style="text-decoration:underline">Log in</a>
+                    <?php __e('register_already_account'); ?>
+                    <a href="login.php" style="text-decoration:underline"><?php __e('register_login_link'); ?></a>
                 </div>
             </form>
         </div>
@@ -451,23 +577,50 @@ $companyName = "FOJ Express";
     </footer>
 
     <script>
-        function toggleMenu(force) {
-            const el = document.getElementById('mobileMenu');
-            const isOpen = typeof force === 'boolean' ? force : !el.classList.contains('open');
-            el.classList.toggle('open', isOpen);
-        }
-    </script>
-    <script>
-        function togglePassword(id, btn) {
-            const input = document.getElementById(id);
-            if (input.type === "password") {
-                input.type = "text";
-                btn.textContent = "Hide";
+        function togglePasswords() {
+            const checkbox = document.getElementById('show-passwords');
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('cpassword');
+            
+            if (checkbox.checked) {
+                passwordInput.type = "text";
+                confirmPasswordInput.type = "text";
             } else {
-                input.type = "password";
-                btn.textContent = "Show";
+                passwordInput.type = "password";
+                confirmPasswordInput.type = "password";
             }
         }
+
+        function checkPasswordStrength() {
+            const password = document.getElementById('password').value;
+            
+            // Check each requirement
+            const requirements = {
+                'req-length': password.length >= 8,
+                'req-uppercase': /[A-Z]/.test(password),
+                'req-lowercase': /[a-z]/.test(password),
+                'req-number': /[0-9]/.test(password),
+                'req-special': /[\W_]/.test(password)
+            };
+
+            // Update each requirement's visual state
+            Object.keys(requirements).forEach(reqId => {
+                const reqElement = document.getElementById(reqId);
+                if (requirements[reqId]) {
+                    reqElement.classList.add('met');
+                } else {
+                    reqElement.classList.remove('met');
+                }
+            });
+        }
+
+        // Check password strength on page load if password field has value
+        document.addEventListener('DOMContentLoaded', function() {
+            const passwordInput = document.getElementById('password');
+            if (passwordInput.value) {
+                checkPasswordStrength();
+            }
+        });
     </script>
 
 </body>

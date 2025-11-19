@@ -1,13 +1,17 @@
 <?php
 session_start();
+// Include i18n bootstrap
+require_once __DIR__ . '/bootstrap/i18n.php';
 if (isset($_SESSION['auth'])) {
     header("Location: index.php");
     exit();
 }
 $companyName = "FOJ Express";
+$current_lang = get_current_lang();
+$is_rtl = is_rtl();
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo $current_lang; ?>" dir="<?php echo $is_rtl ? 'rtl' : 'ltr'; ?>">
 
 <head>
     <meta charset="UTF-8" />
@@ -17,6 +21,9 @@ $companyName = "FOJ Express";
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
+    <?php if ($is_rtl): ?>
+    <link rel="stylesheet" href="css/rtl.css">
+    <?php endif; ?>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
         /* Same design tokens as the landing page (light theme) */
@@ -267,49 +274,13 @@ $companyName = "FOJ Express";
 
 <body>
 
-    <!-- Header matches landing -->
-    <header>
-        <div class="container nav">
-            <a href="index.php" class="brand" aria-label="<?php echo $companyName; ?> Home">
-                <span class="logo" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                        <path d="M3 12h9" />
-                        <path d="M12 6l6 6-6 6" />
-                    </svg>
-                </span>
-                <span><?php echo $companyName; ?></span>
-            </a>
-            <nav class="nav-links" aria-label="Primary">
-                <a href="index.php#services">Services</a>
-                <a href="index.php#about">About</a>
-                <a href="index.php#gallery">Gallery</a>
-                <a href="index.php#contact">Contact</a>
-            </nav>
-            <div class="nav-cta">
-                <a class="btn light" href="login.php">Log in</a>
-                <a class="btn primary" href="register.php">Register</a>
-            </div>
-            <button class="hamburger" aria-label="Open menu" onclick="toggleMenu()">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 6h18M3 12h18M3 18h18" />
-                </svg>
-            </button>
-        </div>
-        <div id="mobileMenu" class="mobile-menu container" role="dialog" aria-modal="true" aria-label="Mobile menu">
-            <a href="index.php#services" onclick="toggleMenu(false)">Services</a>
-            <a href="index.php#about" onclick="toggleMenu(false)">About</a>
-            <a href="index.php#gallery" onclick="toggleMenu(false)">Gallery</a>
-            <a href="index.php#contact" onclick="toggleMenu(false)">Contact</a>
-            <a class="btn light" href="login.php">Log in</a>
-            <a class="btn primary" href="register.php">Register</a>
-        </div>
-    </header>
+    <?php include 'pages/header.php'; ?>
 
     <!-- Auth card -->
     <main>
         <div class="auth-card">
-            <h1>Login</h1>
-            <p class="lead">Please enter your credentials to continue.</p>
+            <h1><?php __e('login_title'); ?></h1>
+            <p class="lead"><?php __e('login_desc'); ?></p>
 
             <?php if (isset($_SESSION['status'])): ?>
                 <div
@@ -321,11 +292,11 @@ $companyName = "FOJ Express";
 
             <form action="code.php" method="POST" novalidate>
                 <div class="field">
-                    <label for="email">Email Address</label>
+                    <label for="email"><?php __e('login_email'); ?></label>
                     <input id="email" type="email" name="email" required placeholder="you@example.com" />
                 </div>
                 <div class="field">
-                    <label for="password">Password</label>
+                    <label for="password"><?php __e('login_password'); ?></label>
                     <input id="password" type="password" name="password" required placeholder="••••••••" />
                 </div>
 
@@ -334,13 +305,13 @@ $companyName = "FOJ Express";
                 </div>
 
                 <div class="actions">
-                    <a class="btn" href="index.php">Back</a>
-                    <button type="submit" name="login_btn" class="btn primary">Login</button>
+                    <a class="btn" href="index.php"><?php __e('back'); ?></a>
+                    <button type="submit" name="login_btn" class="btn primary"><?php __e('login_title'); ?></button>
                 </div>
 
                 <div class="helper">
-                    Do not have an account?
-                    <a href="register.php" style="text-decoration:underline">Register</a>
+                    <?php __e('login_no_account'); ?>
+                    <a href="register.php" style="text-decoration:underline"><?php __e('login_register_link'); ?></a>
                 </div>
             </form>
         </div>
@@ -362,13 +333,6 @@ $companyName = "FOJ Express";
         </div>
     </footer>
 
-    <script>
-        function toggleMenu(force) {
-            const el = document.getElementById('mobileMenu');
-            const isOpen = typeof force === 'boolean' ? force : !el.classList.contains('open');
-            el.classList.toggle('open', isOpen);
-        }
-    </script>
 </body>
 
 </html>

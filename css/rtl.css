@@ -1,0 +1,100 @@
+/* Minimal RTL Support for Arabic */
+
+[dir="rtl"] {
+    direction: rtl;
+    text-align: right;
+}
+
+[dir="rtl"] .container,
+[dir="rtl"] .container-ex {
+    direction: rtl;
+}
+
+[dir="rtl"] .grid {
+    direction: rtl;
+}
+
+[dir="rtl"] .field {
+    text-align: right;
+}
+
+[dir="rtl"] .field input,
+[dir="rtl"] .field select,
+[dir="rtl"] .field textarea {
+    text-align: right;
+}
+
+[dir="rtl"] .btn {
+    direction: rtl;
+}
+
+[dir="rtl"] .card {
+    text-align: right;
+}
+
+[dir="rtl"] .order-card {
+    text-align: right;
+}
+
+[dir="rtl"] .order-info {
+    direction: rtl;
+}
+
+[dir="rtl"] .order-actions {
+    direction: rtl;
+    justify-content: flex-start;
+}
+
+[dir="rtl"] .track {
+    direction: rtl;
+}
+
+[dir="rtl"] .personal-section,
+[dir="rtl"] .address-section,
+[dir="rtl"] .password-section {
+    text-align: right;
+}
+
+[dir="rtl"] .password-requirements {
+    direction: rtl;
+}
+
+[dir="rtl"] .requirement {
+    direction: rtl;
+    text-align: right;
+}
+
+[dir="rtl"] .stats {
+    direction: rtl;
+}
+
+[dir="rtl"] .cards {
+    direction: rtl;
+}
+
+[dir="rtl"] .about {
+    direction: rtl;
+}
+
+[dir="rtl"] .contact {
+    direction: rtl;
+}
+
+[dir="rtl"] .contact-grid {
+    direction: rtl;
+}
+
+[dir="rtl"] .payment-info-row {
+    direction: rtl;
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .info-item {
+    text-align: right;
+}
+
+[dir="rtl"] .info-label,
+[dir="rtl"] .info-value {
+    text-align: right;
+}
+

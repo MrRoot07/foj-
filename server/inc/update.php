@@ -9,6 +9,17 @@ function updateDataTable($data)
     $value = $data['value'];
     $table = $data['table'];
 
+    // Hash password if field is 'password'
+    if ($field === 'password') {
+        $value = password_hash($value, PASSWORD_DEFAULT);
+    }
+    
+    $value = mysqli_real_escape_string($con, $value);
+    $field = mysqli_real_escape_string($con, $field);
+    $table = mysqli_real_escape_string($con, $table);
+    $id_fild = mysqli_real_escape_string($con, $id_fild);
+    $id = mysqli_real_escape_string($con, $id);
+
     $sql = "UPDATE $table SET $field = '$value' where $id_fild = '$id'";
     return mysqli_query($con, $sql);
 }
@@ -117,6 +128,42 @@ function editQtyinCart($data)
 
     $sql = "UPDATE cart SET $field = '$value', date_updated = now() where cart_id = $cart_id";
     return mysqli_query($con, $sql);	
+}
+
+function updatePaymentStatus($request_id, $payment_status, $paypal_transaction_id = null)
+{
+    include 'connection.php';
+
+    $paypal_transaction_id = mysqli_real_escape_string($con, $paypal_transaction_id);
+    
+    if ($paypal_transaction_id) {
+        $sql = "UPDATE request SET payment_status = '$payment_status', paypal_transaction_id = '$paypal_transaction_id', payment_date = now() WHERE request_id = '$request_id'";
+    } else {
+        $sql = "UPDATE request SET payment_status = '$payment_status', payment_date = now() WHERE request_id = '$request_id'";
+    }
+    
+    return mysqli_query($con, $sql);
+}
+
+function updatePassword($data)
+{
+    include 'connection.php';
+    
+    $customer_id = mysqli_real_escape_string($con, $data['customer_id']);
+    $new_password = $data['new_password'];
+    
+    // Hash the new password
+    $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+    $hashed_password = mysqli_real_escape_string($con, $hashed_password);
+    
+    $sql = "UPDATE customer SET password = '$hashed_password' WHERE customer_id = '$customer_id'";
+    $result = mysqli_query($con, $sql);
+    
+    if ($result) {
+        echo json_encode(array('success' => true));
+    } else {
+        echo json_encode(array('success' => false, 'error' => 'Failed to update password'));
+    }
 }
 
 ?>

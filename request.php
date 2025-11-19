@@ -1,5 +1,7 @@
 <?php
 session_start();
+// Include i18n bootstrap
+require_once __DIR__ . '/bootstrap/i18n.php';
 include 'pages/head.php';
 include('auth.php');
 include('conf.php');
@@ -10,15 +12,20 @@ if (!isset($_SESSION['auth'])) {
 }
 
 $companyName = "FOJ Express";
+$current_lang = get_current_lang();
+$is_rtl = is_rtl();
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo $current_lang; ?>" dir="<?php echo $is_rtl ? 'rtl' : 'ltr'; ?>">
 
 <head>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
+    <?php if ($is_rtl): ?>
+    <link rel="stylesheet" href="css/rtl.css">
+    <?php endif; ?>
 
     <style>
         /* Same design tokens as the landing page (light theme) */
@@ -229,18 +236,46 @@ $companyName = "FOJ Express";
             margin-bottom: 12px
         }
 
-        .field input {
+        .field input,
+        .field select,
+        .field textarea {
             background: #fff;
             border: 1px solid rgba(0, 0, 0, .12);
             border-radius: 12px;
             padding: 12px 14px;
             color: var(--text);
-            outline: none
+            outline: none;
+            font-family: inherit;
+            font-size: inherit;
         }
 
-        .field input:focus {
+        .field input:focus,
+        .field select:focus,
+        .field textarea:focus {
             box-shadow: var(--ring);
             border-color: transparent
+        }
+
+        .field textarea {
+            resize: vertical;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .mt-2 {
+            margin-top: 16px;
+        }
+
+        .mt-4 {
+            margin-top: 24px;
+        }
+
+        .mb-1 {
+            margin-bottom: 8px;
         }
 
         .actions {
@@ -270,64 +305,29 @@ $companyName = "FOJ Express";
 
 <body>
 
-    <header>
-        <div class="container nav">
-            <a href="index.php" class="brand" aria-label="Home">
-                <span class="logo"></span>
-                <span><?php echo $companyName; ?></span>
-            </a>
-
-            <nav class="nav-links">
-                <a href="index.php#services">Services</a>
-                <a href="index.php#about">About</a>
-                <a href="index.php#gallery">Gallery</a>
-                <a href="index.php#contact">Contact</a>
-            </nav>
-
-            <div class="nav-cta">
-                <a class="btn primary" href="request.php">Request</a>
-                <a class="btn light" href="logout.php">Logout</a>
-            </div>
-
-            <button class="hamburger" onclick="toggleMenu()">
-                <svg width="26" height="26" viewBox="0 0 24 24">
-                    <path d="M3 6h18M3 12h18M3 18h18" />
-                </svg>
-            </button>
-        </div>
-
-        <div id="mobileMenu" class="mobile-menu container">
-            <a href="index.php#services" onclick="toggleMenu(false)">Services</a>
-            <a href="index.php#about" onclick="toggleMenu(false)">About</a>
-            <a href="index.php#gallery" onclick="toggleMenu(false)">Gallery</a>
-            <a href="index.php#contact" onclick="toggleMenu(false)">Contact</a>
-            <a class="btn primary" href="tracking.php">Tracking</a>
-            <a class="btn primary" href="request.php">Request</a>
-            <a class="btn light" href="logout.php">Logout</a>
-        </div>
-    </header>
+    <?php include 'pages/header.php'; ?>
 
     <main
         style="min-height: calc(100vh - 64px); display: flex; justify-content: center; align-items: flex-start; padding: 40px 0;">
         <div class="auth-card" style="max-width:900px; width:100%;">
 
-            <h1 class="mb-1">Create Delivery Request</h1>
-            <p class="lead">Fill in the shipment & receiver information below.</p>
+            <h1 class="mb-1"><?php __e('request_title'); ?></h1>
+            <p class="lead"><?php __e('request_desc'); ?></p>
 
             <form method="POST" action="#" onsubmit="event.preventDefault();">
 
-                <h3 class="mt-2">Sender Details</h3>
+                <h3 class="mt-2"><?php __e('request_sender_details'); ?></h3>
                 <div class="grid">
                     <div class="field">
-                        <label>Phone Number</label>
+                        <label><?php __e('request_sender_phone'); ?></label>
                         <input type="text" name="sender_phone" id="sender_phone" required>
                     </div>
                     <div class="field">
-                        <label>Weight (kg)</label>
+                        <label><?php __e('request_weight'); ?></label>
                         <input type="number" name="weight" id="weight" required>
                     </div>
                     <div class="field">
-                        <label>Sending Location</label>
+                        <label><?php __e('request_send_location'); ?></label>
                         <select name="send_location" id="send_location" required>
                             <option value="">Select</option>
                             <?php $getall = getAllArea();
@@ -337,7 +337,7 @@ $companyName = "FOJ Express";
                         </select>
                     </div>
                     <div class="field">
-                        <label>Pick Up Location</label>
+                        <label><?php __e('request_pickup_location'); ?></label>
                         <select name="end_location" id="end_location" onchange="calculation(this)" required>
                             <option value="">Select</option>
                             <?php $getall = getAllArea();
@@ -349,32 +349,41 @@ $companyName = "FOJ Express";
                 </div>
 
                 <div class="field">
-                    <label>Price (Auto Calculated)</label>
+                    <label><?php __e('request_price'); ?></label>
                     <input type="text" disabled id="total">
                     <input type="hidden" name="total_fee" id="total_fee">
-                    <input type="hidden" name="customer_id" value="<?= $_SESSION['auth']; ?>">
+                    <input type="hidden" name="customer_id" value="<?= $_SESSION['customer_id']; ?>">
                 </div>
 
-                <h3 class="mt-4">Receiver Details</h3>
+                <h3 class="mt-4"><?php __e('request_payment_method'); ?></h3>
+                <div class="field">
+                    <label><?php __e('request_payment_select'); ?></label>
+                    <select name="payment_method" id="payment_method" required>
+                        <option value="cod"><?php __e('request_payment_cod'); ?></option>
+                        <option value="paypal"><?php __e('request_payment_paypal'); ?></option>
+                    </select>
+                </div>
+
+                <h3 class="mt-4"><?php __e('request_receiver_details'); ?></h3>
                 <div class="grid">
                     <div class="field">
-                        <label>Receiver Name</label>
+                        <label><?php __e('request_receiver_name'); ?></label>
                         <input type="text" name="res_name" id="res_name" required>
                     </div>
                     <div class="field">
-                        <label>Receiver Phone</label>
+                        <label><?php __e('request_receiver_phone'); ?></label>
                         <input type="text" name="res_phone" id="res_phone" required>
                     </div>
                 </div>
 
                 <div class="field">
-                    <label>Receiver Address</label>
+                    <label><?php __e('request_receiver_address'); ?></label>
                     <textarea name="red_address" id="red_address" required rows="4"></textarea>
                 </div>
 
                 <div style="margin-top:16px; display:flex; gap:12px;">
-                    <button type="button" class="btn primary" onclick="addRequest(this.form)">Send Request</button>
-                    <a class="btn light" href="index.php">Cancel</a>
+                    <button type="button" class="btn primary" onclick="addRequest(this.form)"><?php __e('request_send'); ?></button>
+                    <a class="btn light" href="index.php"><?php __e('cancel'); ?></a>
                 </div>
 
             </form>
@@ -383,11 +392,97 @@ $companyName = "FOJ Express";
 
     <?php include 'pages/footer.php'; ?>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        function toggleMenu(force) {
-            const el = document.getElementById('mobileMenu');
-            const isOpen = typeof force === 'boolean' ? force : !el.classList.contains('open');
-            el.classList.toggle('open', isOpen);
+        function calculation(ele) {
+            var send_location = document.getElementById("send_location").value;
+            var end_location = document.getElementById(ele.id).value;
+            var weight = document.getElementById("weight").value;
+
+            var data = {
+                send_location: send_location,
+                end_location: end_location,
+            };
+
+            if (weight.trim() != "") {
+                $.ajax({
+                    method: "POST",
+                    url: "server/api.php?function_code=checkArea",
+                    data: data,
+                    success: function ($data) {
+                        if ($data > 0) {
+                            var sum = parseInt(weight) * parseInt($data);
+                            document.getElementById("total").value = "$" + sum;
+                            document.getElementById("total_fee").value = sum;
+                        } else {
+                            alert("This area is not in our service area");
+                        }
+                    },
+                    error: function (error) {
+                        console.log(`Error ${error}`);
+                    },
+                });
+            } else {
+                alert("Please enter Weight");
+            }
+        }
+
+        function addRequest(form) {
+            var formData = new FormData(form);
+            var payment_method = formData.get("payment_method");
+
+            if (formData.get("sender_phone").trim() != "") {
+                if (formData.get("weight").trim() != "") {
+                    if (formData.get("total_fee").trim() != "") {
+                        if (formData.get("res_phone").trim() != "") {
+                            if (formData.get("red_address").trim() != "") {
+                                $.ajax({
+                                    method: "POST",
+                                    url: "server/api.php?function_code=addRequest",
+                                    data: formData,
+                                    success: function ($data) {
+                                        try {
+                                            var response = typeof $data === 'string' ? JSON.parse($data) : $data;
+                                            if (response.success) {
+                                                if (payment_method === 'paypal') {
+                                                    // Redirect to payment page for PayPal
+                                                    window.location.href = "payment.php?request_id=" + response.request_id;
+                                                } else {
+                                                    // COD - redirect to tracking
+                                                    alert("Request submitted successfully!");
+                                                    window.location.href = "tracking.php";
+                                                }
+                                            } else {
+                                                alert("Failed to submit request");
+                                            }
+                                        } catch (e) {
+                                            console.error("Error parsing response:", e, $data);
+                                            alert("An error occurred. Please try again.");
+                                        }
+                                    },
+                                    cache: false,
+                                    contentType: false,
+                                    processData: false,
+                                    error: function (error) {
+                                        console.log(`Error ${error}`);
+                                        alert("An error occurred. Please try again.");
+                                    },
+                                });
+                            } else {
+                                alert("Please Enter Receiver Address");
+                            }
+                        } else {
+                            alert("Please Enter Receiver Phone Number");
+                        }
+                    } else {
+                        alert("Please Enter Locations to get Price");
+                    }
+                } else {
+                    alert("Please Enter Parcel Weight");
+                }
+            } else {
+                alert("Please Enter Your Phone Number");
+            }
         }
     </script>
 

@@ -1,5 +1,8 @@
 <?php
-session_start();
+// Start session only if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 include('conf.php');
 
 if (!isset($_SESSION['Email'])) {
@@ -298,58 +301,7 @@ $companyName = "FOJ Express";
 
 <body>
 
-    <!-- Header matches the rest -->
-    <header>
-        <div class="container nav">
-            <a href="index.php" class="brand" aria-label="<?php echo $companyName; ?> Home">
-                <span class="logo" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                        <path d="M3 12h9" />
-                        <path d="M12 6l6 6-6 6" />
-                    </svg>
-                </span>
-                <span><?php echo $companyName; ?></span>
-            </a>
-            <nav class="nav-links" aria-label="Primary">
-                <a href="index.php#services">Services</a>
-                <a href="index.php#about">About</a>
-                <a href="index.php#gallery">Gallery</a>
-                <a href="index.php#contact">Contact</a>
-            </nav>
-
-            <?php if (isset($_SESSION['auth'])): ?>
-                <div class="nav-cta">
-                    <a class="btn primary" href="request.php">Request</a>
-                    <a class="btn light" href="logout.php">Logout</a>
-                </div>
-            <?php else: ?>
-                <div class="nav-cta">
-                    <a class="btn light" href="login.php">Log in</a>
-                    <a class="btn primary" href="register.php">Register</a>
-                </div>
-            <?php endif; ?>
-
-            <button class="hamburger" aria-label="Open menu" onclick="toggleMenu()">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 6h18M3 12h18M3 18h18" />
-                </svg>
-            </button>
-        </div>
-
-        <div id="mobileMenu" class="mobile-menu container" role="dialog" aria-modal="true" aria-label="Mobile menu">
-            <a href="index.php#services" onclick="toggleMenu(false)">Services</a>
-            <a href="index.php#about" onclick="toggleMenu(false)">About</a>
-            <a href="index.php#gallery" onclick="toggleMenu(false)">Gallery</a>
-            <a href="index.php#contact" onclick="toggleMenu(false)">Contact</a>
-            <?php if (isset($_SESSION['auth'])): ?>
-                <a class="btn primary" href="request.php">Request</a>
-                <a class="btn light" href="logout.php">Logout</a>
-            <?php else: ?>
-                <a class="btn light" href="login.php">Log in</a>
-                <a class="btn primary" href="register.php">Register</a>
-            <?php endif; ?>
-        </div>
-    </header>
+    <?php include 'pages/header.php'; ?>
 
     <!-- OTP card -->
     <main>
@@ -397,13 +349,6 @@ $companyName = "FOJ Express";
         </div>
     </footer>
 
-    <script>
-        function toggleMenu(force) {
-            const el = document.getElementById('mobileMenu');
-            const isOpen = typeof force === 'boolean' ? force : !el.classList.contains('open');
-            el.classList.toggle('open', isOpen);
-        }
-    </script>
 </body>
 
 </html>

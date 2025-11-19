@@ -1,6 +1,8 @@
 <?php
-// Start the session
+// Start session only if not already started
+if (session_status() === PHP_SESSION_NONE) {
 session_start();
+}
 
 // require_once 'mail.php';
 use PHPMailer\PHPMailer\PHPMailer;
@@ -12,9 +14,6 @@ require './vendor/autoload.php';
 
 $con =  mysqli_connect("localhost", "root", "" , "royal_express_db") or die("Database Connection Fail"); 
 
-
-
-
 date_default_timezone_set("Asia/Kuala_Lumpur");
 
 // Set the previous page in the session if not already set
@@ -22,54 +21,48 @@ if (!isset($_SESSION['previous_page']) && isset($_SERVER['HTTP_REFERER'])) {
     $_SESSION['previous_page'] = $_SERVER['HTTP_REFERER'];
 }
 
-// Check if email is set in the session
-if (isset($_SESSION["Email"])) {
-    $email = $_SESSION["Email"];
-
-
-
-    if ($result) {
-        // Fetch the phone number from the database
-$query = "SELECT phone FROM customer WHERE email = :email";
-$statement = $connect->prepare($query);
-$statement->bindParam(':email', $email);
-$statement->execute();
-$result = $statement->fetch(PDO::FETCH_ASSOC);
-
-$phone = $result['phone'];
-
-function generateOTP($phone) {
-    // Ensure phone number is treated as a string
-    $phone = (string)$phone;
-
-    // Hash the phone number using SHA-256
-    $hash = hash('sha256', $phone);
-
-    // Extract digits from the hash
-    $digits = preg_replace('/\D/', '', $hash);
-
-
-    // new one
-    // Shuffle the digits to randomize them
-    $digitsArray = str_split($digits);
-    shuffle($digitsArray);
-    $shuffledDigits = implode('', $digitsArray);
-
-    // Take the first 6 digits from the shuffled digits
-    $otp = substr($shuffledDigits, 0, 6);
-
-
-    // Take first 6 digits and perform modulus to ensure it's a 6-digit number
-    // $otp = substr($digits, 0, 6);
-    if (strlen($otp) < 6) {
-        $otp = str_pad($otp, 6, '0', STR_PAD_LEFT); // Pad with zeros if less than 6 digits
+/**
+ * Generate a strong alphanumeric OTP
+ * 
+ * This function creates a secure 8-character OTP using:
+ * - Uppercase letters (A-Z, excluding confusing characters: I, O)
+ * - Numbers (0-9, excluding confusing: 0, 1)
+ * 
+ * Why this approach is secure:
+ * 1. Uses cryptographically secure random_int() when available
+ * 2. Larger character set (32 characters) = 32^8 = 1,073,741,824 combinations
+ * 3. Avoids visually confusing characters (0/O, 1/I) for better UX
+ * 4. Mix of letters and numbers makes it harder to guess
+ * 5. 8 characters provides strong security while remaining user-friendly
+ */
+function generateStrongOTP($length = 8) {
+    // Character set: A-Z (excluding I and O), 2-9 (excluding 0 and 1)
+    // This avoids confusing characters: 0/O, 1/I, l/I
+    $characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    $charactersLength = strlen($characters);
+    $otp = '';
+    
+    // Use cryptographically secure random if available, fallback to rand()
+    if (function_exists('random_int')) {
+        for ($i = 0; $i < $length; $i++) {
+            $otp .= $characters[random_int(0, $charactersLength - 1)];
+        }
+    } else {
+        for ($i = 0; $i < $length; $i++) {
+            $otp .= $characters[rand(0, $charactersLength - 1)];
+        }
     }
 
     return $otp;
 }
 
-$otp = generateOTP($phone);
-        // $otp = rand(99999, 999999);
+// Check if email is set in the session
+if (isset($_SESSION["Email"])) {
+    $email = $_SESSION["Email"];
+
+    // Generate strong alphanumeric OTP
+    $otp = generateStrongOTP(8);
+    
         $phpmailer = new PHPMailer();
         $phpmailer->isSMTP();
         $phpmailer->Host = 'smtp.gmail.com';
@@ -84,7 +77,7 @@ $otp = generateOTP($phone);
         $phpmailer->Subject = 'Verification Code';
         $phpmailer->Body = '
             <div style="margin:10 auto; text-align:center">
-                 <p>Email Verification for Your Account in Sultans</p>
+             <p>Email Verification for Your Account in FOJ Express</p>
                 <h4>Your Code:</h4>
                 <h1>' . $otp . '</h1>
             </div>
@@ -112,9 +105,6 @@ $otp = generateOTP($phone);
             } else {
                 echo 'Previous page not found in session.';
             }
-        }
-    } else {
-        echo 'No user found with the provided email.';
     }
 } else {
     echo 'Email is not set in the session.';

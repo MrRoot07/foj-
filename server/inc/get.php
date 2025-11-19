@@ -92,7 +92,27 @@ function getAllTracking()
 {
     include 'connection.php';
 
-    $viewcat = "SELECT * FROM request join customer on customer.customer_id = request.customer_id WHERE request.is_deleted = 0 ORDER BY date_updated DESC";
+    $viewcat = "SELECT request.*, customer.name, customer.email, customer.phone 
+                FROM request 
+                LEFT JOIN customer ON customer.customer_id = request.customer_id AND customer.is_deleted = 0 
+                WHERE request.is_deleted = 0 
+                ORDER BY request.date_updated DESC";
+    return mysqli_query($con, $viewcat);
+}
+
+function getRequestById($request_id)
+{
+    include 'connection.php';
+
+    $viewcat = "SELECT * FROM request WHERE request_id = '$request_id' AND is_deleted = 0";
+    return mysqli_query($con, $viewcat);
+}
+
+function getAllPayments()
+{
+    include 'connection.php';
+
+    $viewcat = "SELECT r.*, c.name as customer_name, c.email as customer_email FROM request r JOIN customer c ON c.customer_id = r.customer_id WHERE r.is_deleted = 0 ORDER BY r.date_updated DESC";
     return mysqli_query($con, $viewcat);
 }
 
@@ -132,10 +152,21 @@ function checkuserPassword($data)
     $customer_id = $data['customer_id'];
     $password = $data['password'];
 
-    $viewcat = "SELECT * FROM customer WHERE is_deleted = 0 AND password = '$password' AND customer_id = '$customer_id' ";
+    // Get customer with hashed password
+    $viewcat = "SELECT * FROM customer WHERE is_deleted = 0 AND customer_id = '$customer_id' ";
     $result = mysqli_query($con, $viewcat);
-    $count = mysqli_num_rows($result);
-    echo $count;
+    
+    if ($result && mysqli_num_rows($result) > 0) {
+        $user = mysqli_fetch_assoc($result);
+        // Verify password using password_verify for hashed passwords
+        if (password_verify($password, $user['password'])) {
+            echo 1;
+        } else {
+            echo 0;
+        }
+    } else {
+        echo 0;
+    }
 }
 
 function checkArea($data)
@@ -191,35 +222,59 @@ function getAllcustomers()
 
 function getLoginAdmin($data)
 {
+    if (session_id() == '') {
+        session_start();
+    }
     include 'connection.php';
 
-    $email = $data['email'];
-    $password = $data['password'];
+    $email = isset($data['email']) ? trim($data['email']) : '';
+    $password = isset($data['password']) ? trim($data['password']) : '';
 
-    $loginAdmin = "SELECT * FROM employee WHERE email = '$email' AND password ='$password'";
+    if (empty($email) || empty($password)) {
+        echo "";
+        return;
+    }
+
+    $loginAdmin = "SELECT * FROM employee WHERE email = '$email' AND password = '$password' AND is_deleted = '0'";
     $countloginAdmin = mysqli_query($con, $loginAdmin);
+    
+    if (!$countloginAdmin) {
+        echo "";
+        return;
+    }
+    
     $counts_loginAdmin = mysqli_num_rows($countloginAdmin);
 
-    $loginCustomer = "SELECT * FROM customer WHERE email = '$email' AND password ='$password'";
+    $loginCustomer = "SELECT * FROM customer WHERE email = '$email' AND password = '$password' AND is_deleted = '0'";
     $count_loginCustomer = mysqli_query($con, $loginCustomer);
+    
+    if (!$count_loginCustomer) {
+        echo "";
+        return;
+    }
+    
     $counts_loginCustomer = mysqli_num_rows($count_loginCustomer);
 
     $value = "";
 
     if ($counts_loginAdmin > 0) {
-
         $value = 'admin';
-
         $res = checkemployee($email);
-        $row = mysqli_fetch_assoc($res);
-        $_SESSION['admin'] = $row['email'];
+        if ($res) {
+            $row = mysqli_fetch_assoc($res);
+            if ($row) {
+                $_SESSION['admin'] = $row['email'];
+            }
+        }
     } else if ($counts_loginCustomer > 0) {
-
         $value = 'customer';
-
         $res = checkCustomerByEmail($email);
-        $row = mysqli_fetch_assoc($res);
-        $_SESSION['customer'] = $row['customer_id'];
+        if ($res) {
+            $row = mysqli_fetch_assoc($res);
+            if ($row) {
+                $_SESSION['customer'] = $row['customer_id'];
+            }
+        }
     }
     echo $value;
 }

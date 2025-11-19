@@ -63,7 +63,7 @@ addRequestAdmin = (form) => {
               data: formData,
               success: function ($data) {
                 console.log($data);
-                successToastRedirect("courier.php");
+                successToastRedirect("orders.php");
               },
               cache: false,
               contentType: false,

@@ -5,57 +5,7 @@
 
 <body data-spy="scroll" data-target=".site-navbar-target" data-offset="200">
 
-    <!-- <div class="site-wrap"> -->
-
-    <div class="site-mobile-menu site-navbar-target">
-        <div class="site-mobile-menu-header">
-            <div class="site-mobile-menu-close mt-3">
-                <span class="icon-close2 js-menu-toggle"></span>
-            </div>
-        </div>
-        <div class="site-mobile-menu-body"></div>
-    </div>
-
-    <header class="site-navbar py-3 js-site-navbar site-navbar-target" role="banner" id="site-navbar">
-
-        <div class="container">
-            <div class="row align-items-center">
-
-                <div class="col-11 col-xl-2 site-logo">
-                    <h1 class="mb-0"><a href="index.php" class="text-white h5 mb-0">FOJ Express</a></h1>
-                </div>
-                <div class="col-12 col-md-10 d-none d-xl-block">
-                    <nav class="site-navigation position-relative text-right" role="navigation">
-
-                        <ul class="site-menu js-clone-nav mx-auto d-none d-lg-block">
-                            <li><a href="index.php#section-home" class="nav-link">Home</a></li>
-                            <li>
-                                <a href="index.php#section-about" class="nav-link">About Us</a>
-                            </li>
-                            <li><a href="index.php#section-gallery" class="nav-link">Gallery</a></li>
-                            <li><a href="index.php#section-contact" class="nav-link">Contact</a></li>
-                            <?php if (isset($_SESSION['customer'])): ?>
-                                <li><a href="profile.php" class="nav-link">Profile</a></li>
-                                <li><a href="tracking.php" class="nav-link">Tracking</a></li>
-                                <li><a href="admin/logout.php" class="nav-link">Logout</a></li>
-                            <?php else: ?>
-                                <li><a href="admin/login.php" class="nav-link">Login</a></li>
-                            <?php endif; ?>
-                            <li><a href="request.php" class="nav-link active">Request</a></li>
-                        </ul>
-                    </nav>
-                </div>
-
-
-                <div class="d-inline-block d-xl-none ml-md-0 mr-auto py-3" style="position: relative; top: 3px;"><a
-                        href="#" class="site-menu-toggle js-menu-toggle"><span class="icon-menu h3"></span></a></div>
-
-            </div>
-
-        </div>
-        </div>
-
-    </header>
+    <?php include 'pages/header.php'; ?>
 
 
 

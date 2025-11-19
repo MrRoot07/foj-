@@ -75,10 +75,20 @@ if (isset($_POST['reg_btn'])) {
     $phone = mysqli_real_escape_string($con, $_POST['phone']);
     $email = mysqli_real_escape_string($con, $_POST['email']);
     $gender = mysqli_real_escape_string($con, $_POST['gender']);
-    $address = mysqli_real_escape_string($con, $_POST['address']);
+    $street = mysqli_real_escape_string($con, $_POST['street']);
+    $city = mysqli_real_escape_string($con, $_POST['city']);
+    $state = mysqli_real_escape_string($con, $_POST['state']);
+    $zip_code = mysqli_real_escape_string($con, $_POST['zip_code']);
+    $additional_address = isset($_POST['additional_address']) ? mysqli_real_escape_string($con, $_POST['additional_address']) : '';
     $password = mysqli_real_escape_string($con, $_POST['password']);
     $cpassword = mysqli_real_escape_string($con, $_POST['cpassword']);
     $active = 0;
+    
+    // Combine address fields into full address for backward compatibility
+    $address = $street . ', ' . $city . ', ' . $state . ' ' . $zip_code;
+    if (!empty($additional_address)) {
+        $address = $additional_address . ', ' . $address;
+    }
 
     // reCAPTCHA verification
     $recaptchaResponse = $_POST['g-recaptcha-response'];
@@ -152,9 +162,9 @@ if (isset($_POST['reg_btn'])) {
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
     // Insert new user
-    $stmt = $con->prepare("INSERT INTO customer (name, nic, phone, email, gender, address, password, active, is_deleted) 
-                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)");
-    $stmt->bind_param("sssssssi", $name, $nic, $phone, $email, $gender, $address, $hashed_password, $active);
+    $stmt = $con->prepare("INSERT INTO customer (name, nic, phone, email, gender, address, street, city, state, zip_code, additional_address, password, active, is_deleted) 
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)");
+    $stmt->bind_param("ssssssssssssi", $name, $nic, $phone, $email, $gender, $address, $street, $city, $state, $zip_code, $additional_address, $hashed_password, $active);
 
     if ($stmt->execute()) {
         $_SESSION['Email'] = $email;

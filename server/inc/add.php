@@ -66,10 +66,47 @@ function addRequest($data)
 	$res_phone = $data['res_phone'];
 	$red_address = $data['red_address'];
 	$res_name = $data['res_name'];
+	$payment_method = isset($data['payment_method']) ? $data['payment_method'] : 'cod';
 
-	$sql = "INSERT INTO request(customer_id, sender_phone, weight, send_location, end_location, total_fee, res_phone, red_address, is_deleted, date_updated, tracking_status, res_name) 
-	VALUES('$customer_id', '$sender_phone', '$weight', '$send_location', '$end_location', '$total_fee', '$res_phone', '$red_address', 0 , now(), 1 , '$res_name')";
-	return mysqli_query($con, $sql);
+	// Generate temporary tracking code
+	$temp_tracking = 'TEMP' . time();
+	
+	$sql = "INSERT INTO request(customer_id, sender_phone, weight, send_location, end_location, total_fee, res_phone, red_address, is_deleted, date_updated, tracking_status, res_name, payment_method, tracking_code) 
+	VALUES('$customer_id', '$sender_phone', '$weight', '$send_location', '$end_location', '$total_fee', '$res_phone', '$red_address', 0 , now(), 1 , '$res_name', '$payment_method', '$temp_tracking')";
+	
+	if (mysqli_query($con, $sql)) {
+		$request_id = mysqli_insert_id($con);
+		// Generate proper tracking code: FOJ-YYYYMMDD-XXXX
+		$date = date('Ymd');
+		$random = str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
+		$tracking_code = 'FOJ-' . $date . '-' . $random;
+		
+		// Generate QR code URL for order details
+		$protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http");
+		$host = $_SERVER['HTTP_HOST'];
+		// Get the base path - remove /server/api.php from the current script path
+		$script_path = dirname(dirname($_SERVER['SCRIPT_NAME']));
+		$base_path = rtrim($script_path, '/');
+		$order_url = $protocol . "://" . $host . $base_path . "/tracking.php?order_id=" . $request_id;
+		
+		// Include QR code helper
+		include 'qrcode_helper.php';
+		
+		// Generate and save QR code
+		$qr_filename = 'QR_' . $tracking_code . '_' . $request_id . '.png';
+		$qr_path = saveQRCodeImage($order_url, $qr_filename);
+		
+		// Update with proper tracking code and QR code path
+		if ($qr_path) {
+			$update_sql = "UPDATE request SET tracking_code = '$tracking_code', qr_code_path = '$qr_path' WHERE request_id = '$request_id'";
+		} else {
+			$update_sql = "UPDATE request SET tracking_code = '$tracking_code' WHERE request_id = '$request_id'";
+		}
+		mysqli_query($con, $update_sql);
+		
+		return $request_id;
+	}
+	return false;
 }
 
 function addEmployee($data)
