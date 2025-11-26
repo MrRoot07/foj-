@@ -104,6 +104,10 @@ function addRequest($data)
 		}
 		mysqli_query($con, $update_sql);
 		
+		// Initialize status history for status 1 (Order placed)
+		$history_sql = "INSERT INTO request_status_history (request_id, status, status_date) VALUES ('$request_id', 1, NOW())";
+		mysqli_query($con, $history_sql);
+		
 		return $request_id;
 	}
 	return false;

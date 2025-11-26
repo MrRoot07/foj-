@@ -11,6 +11,7 @@ $is_rtl = is_rtl();
 
 <?php include 'pages/head.php'; ?>
 <?php include 'admin.php'; ?>
+<?php checkEmployeeAccess(['payments.php']); ?>
 
 <body>
     <div id="app">
@@ -60,7 +61,7 @@ $is_rtl = is_rtl();
                                 </div>
                                 <div class="stat-content">
                                     <div class="stat-label"><?php __e('admin_total_paid'); ?></div>
-                                    <div class="stat-value">$<?php echo number_format($total_paid, 2); ?></div>
+                                    <div class="stat-value">SAR<?php echo number_format($total_paid, 2); ?></div>
                                 </div>
                             </div>
                             <div class="stat-card stat-pending">
@@ -69,7 +70,7 @@ $is_rtl = is_rtl();
                                 </div>
                                 <div class="stat-content">
                                     <div class="stat-label"><?php __e('admin_total_pending'); ?></div>
-                                    <div class="stat-value">$<?php echo number_format($total_pending, 2); ?></div>
+                                    <div class="stat-value">SAR<?php echo number_format($total_pending, 2); ?></div>
                                 </div>
                             </div>
                             <div class="stat-card stat-failed">
@@ -78,7 +79,7 @@ $is_rtl = is_rtl();
                                 </div>
                                 <div class="stat-content">
                                     <div class="stat-label"><?php __e('admin_total_failed'); ?></div>
-                                    <div class="stat-value">$<?php echo number_format($total_failed, 2); ?></div>
+                                    <div class="stat-value">SAR<?php echo number_format($total_failed, 2); ?></div>
                                 </div>
                             </div>
                         </div>
@@ -135,7 +136,7 @@ $is_rtl = is_rtl();
                                                     </div>
                                                     <div class="payment-info-item">
                                                         <label><?php __e('admin_amount'); ?></label>
-                                                        <div class="info-value amount">$<?php echo number_format($amount, 2); ?></div>
+                                                        <div class="info-value amount">SAR<?php echo number_format($amount, 2); ?></div>
                                                     </div>
                                                     <div class="payment-info-item">
                                                         <label><?php __e('admin_payment_method'); ?></label>

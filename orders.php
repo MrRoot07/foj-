@@ -329,7 +329,7 @@ $is_rtl = is_rtl();
                         <div class="order-info">
                             <div class="info-item">
                                 <span class="info-label"><?php __e('orders_amount'); ?></span>
-                                <span class="info-value">$<?php echo number_format($amount, 2); ?></span>
+                                <span class="info-value">SAR<?php echo number_format($amount, 2); ?></span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label"><?php __e('orders_payment_method'); ?></span>

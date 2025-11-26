@@ -89,6 +89,22 @@ if (isset($_GET['function_code']) && $_GET['function_code'] == 'getCustomerTbleD
     checkArea($_POST);
 } else if (isset($_GET['function_code']) && $_GET['function_code'] == 'addArea') {
     addArea($_POST);
+} else if (isset($_GET['function_code']) && $_GET['function_code'] == 'addCustomStatus') {
+    $name_en = isset($_POST['name_en']) ? trim($_POST['name_en']) : '';
+    $name_ar = isset($_POST['name_ar']) ? trim($_POST['name_ar']) : '';
+    $icon = isset($_POST['icon']) ? trim($_POST['icon']) : 'fa-circle';
+    
+    if (empty($name_en) || empty($name_ar)) {
+        echo json_encode(['success' => false, 'error' => 'Status name is required in both languages']);
+        exit;
+    }
+    
+    $status_id = addCustomStatus($name_en, $name_ar, $icon);
+    if ($status_id) {
+        echo json_encode(['success' => true, 'status_id' => $status_id]);
+    } else {
+        echo json_encode(['success' => false, 'error' => 'Failed to add custom status']);
+    }
 } else if (isset($_GET['function_code']) && $_GET['function_code'] == 'addRequest') {
     $request_id = addRequest($_POST);
     if ($request_id) {

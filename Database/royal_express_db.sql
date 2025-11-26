@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 19, 2025 at 11:32 AM
+-- Generation Time: Nov 13, 2025 at 06:43 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -125,12 +125,11 @@ CREATE TABLE `customer` (
 --
 
 INSERT INTO `customer` (`customer_id`, `name`, `email`, `phone`, `nic`, `address`, `street`, `city`, `state`, `zip_code`, `additional_address`, `gender`, `password`, `is_deleted`, `active`) VALUES
-(12, 'Test User 1', 'testuser1@royalexpress.com', '0700000000', '971212125V', 'No 232, Matara Road, Southern Province, Sri Lanka', NULL, NULL, NULL, NULL, NULL, 1, 'testuser1', 0, 1),
-(13, 'Test USer 2', 'testuser2@royalexpress.com', '0701111111', '971212123V', 'No 780, Galle Road, Southern Province, Sri Lanka', NULL, NULL, NULL, NULL, NULL, 1, 'testuser2', 0, 1),
-(19, 'hasan', 'hsn@gmail.com', '0701111111', '10156972', 'test address', NULL, NULL, NULL, NULL, NULL, 1, '$2y$10$10Qvcejdm97mRTagRTAtiO5gd/8UDtgSoRv7nNbayYfP83tihjTuy', 0, 1),
-(23, 'Muadh ali', 'hsnforstudy@gmail.com', '0123456789', '10156972', 'test address', '', '', '', '', '', 1, '$2y$10$6AOOtWelOTgKhF58U5AmRO5C0k7B8LaokY9QGWkub3kDUfstxWJY2', 0, 1),
-(24, 'hasan', 'hsnforstudy@gmail.com', '0123456789', '10156972', 'addhsn, 11, hsncity, hsnstate 123456', '11', 'hsncity', 'hsnstate', '123456', 'addhsn', 1, '$2y$10$V1SIB4UkJaFrn3EL5A.OTeGsVgrEteKU9.HVSPnTFflKNc1aSlTCC', 0, 1),
-(29, 'hasan', 'hubaishih@gmail.com', '0123456789', '10156972', 'hsnadd, 1, hscity, hsnstate 123456', '1', 'hscity', 'hsnstate', '123456', 'hsnadd', 1, '$2y$10$X.tKgmAFjcgBYJyR4n6D6uz3OWiE9wCI1nn0IhBVkYtZB2C9ngd5m', 0, 1);
+(12, 'Test User 1', 'testuser1@royalexpress.com', '0700000000', '971212125V', 'No 232, Matara Road, Southern Province, Sri Lanka', NULL, NULL, NULL, NULL, NULL, 1, 'testuser1', 0, 0),
+(13, 'Test USer 2', 'testuser2@royalexpress.com', '0701111111', '971212123V', 'No 780, Galle Road, Southern Province, Sri Lanka', NULL, NULL, NULL, NULL, NULL, 1, 'testuser2', 0, 0),
+(19, 'hasan', 'hsn@gmail.com', '0701111111', '10156972', 'test address', NULL, NULL, NULL, NULL, NULL, 1, '$2y$10$10Qvcejdm97mRTagRTAtiO5gd/8UDtgSoRv7nNbayYfP83tihjTuy', 0, 0),
+(23, 'Muadh', 'moathnassser@gmail.com', '0123456789', '10156972', 'test address', NULL, NULL, NULL, NULL, NULL, 1, '$2y$10$6AOOtWelOTgKhF58U5AmRO5C0k7B8LaokY9QGWkub3kDUfstxWJY2', 0, 1),
+(24, 'hasan', 'hsnforstudy@gmail.com', '0123456789', '10156972', 'addhsn, 11, hsncity, hsnstate 123456', '11', 'hsncity', 'hsnstate', '123456', 'addhsn', 1, '$2y$10$V1SIB4UkJaFrn3EL5A.OTeGsVgrEteKU9.HVSPnTFflKNc1aSlTCC', 0, 1);
 
 -- --------------------------------------------------------
 
@@ -247,11 +246,7 @@ INSERT INTO `request` (`request_id`, `tracking_code`, `qr_code_path`, `customer_
 (18, 'TEMP18', NULL, 12, 770000000, 1, 22, 7, 50, 'cod', 'paid', NULL, NULL, 771111111, 'Receiver 1, \r\nNo 235,\r\nGalle Road,\r\nMatara', 0, '2023-01-15 11:14:09', 1, 'Receiver 1'),
 (29, 'FOJ-20251111-1650', 'server/uploads/qr_codes/QR_FOJ-20251111-1650_29.png', 24, 123456789, 1, 7, 23, 100, 'paypal', 'paid', '6960856342492031X', '2025-11-12 21:22:42', 123456789, 'hfghfrty ', 0, '2025-11-12 03:14:16', 1, 'new'),
 (49, 'FOJ-20251112-6299', NULL, 24, 123456789, 15, 7, 23, 1500, 'paypal', 'paid', '2VD23389XL874445X', '2025-11-12 20:23:46', 123456789, 'jejejeje', 0, '2025-11-12 20:20:54', 2, 'jaja'),
-(50, 'FOJ-20251112-2538', 'server/uploads/qr_codes/QR_FOJ-20251112-2538_50.png', 24, 123456789, 13, 7, 23, 1300, 'paypal', 'paid', '6YM94096KS555163B', '2025-11-13 00:28:16', 123456789, 'I am testing the QR', 0, '2025-11-13 00:27:48', 1, 'Qr fuck'),
-(51, 'FOJ-20251113-5099', 'server/uploads/qr_codes/QR_FOJ-20251113-5099_51.png', 25, 123456789, 5, 7, 23, 500, 'paypal', 'paid', '9C020047XM023315Y', '2025-11-13 18:52:21', 123456789, 'Aldiksfjqkw;ei', 0, '2025-11-13 18:51:09', 1, 'Ali'),
-(52, 'FOJ-20251113-7061', 'server/uploads/qr_codes/QR_FOJ-20251113-7061_52.png', 23, 123456789, 12, 7, 23, 1200, 'paypal', 'paid', '45037149NA510045H', '2025-11-13 18:54:03', 123456789, 'reywretfhywerth', 0, '2025-11-13 18:53:21', 1, 'Ali Hamoad'),
-(53, 'FOJ-20251113-3893', 'server/uploads/qr_codes/QR_FOJ-20251113-3893_53.png', 23, 123456789, 3, 7, 23, 300, 'cod', 'paid', NULL, NULL, 123456789, 'sfjhsdgf,jvbgdfrrgbv', 0, '2025-11-13 18:54:56', 1, 'Salah'),
-(55, 'FOJ-20251118-7884', 'server/uploads/qr_codes/QR_FOJ-20251118-7884_55.png', 29, 123456789, 2, 7, 23, 200, 'cod', 'pending', NULL, NULL, 123456789, 'khutygfkyhtfkyj', 0, '2025-11-19 04:24:16', 1, '0123456789');
+(50, 'FOJ-20251112-2538', 'server/uploads/qr_codes/QR_FOJ-20251112-2538_50.png', 24, 123456789, 13, 7, 23, 1300, 'paypal', 'paid', '6YM94096KS555163B', '2025-11-13 00:28:16', 123456789, 'I am testing the QR', 0, '2025-11-13 00:27:48', 1, 'Qr fuck');
 
 -- --------------------------------------------------------
 
@@ -388,7 +383,7 @@ ALTER TABLE `contact`
 -- AUTO_INCREMENT for table `customer`
 --
 ALTER TABLE `customer`
-  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `employee`
@@ -412,7 +407,7 @@ ALTER TABLE `price_table`
 -- AUTO_INCREMENT for table `request`
 --
 ALTER TABLE `request`
-  MODIFY `request_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
+  MODIFY `request_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
 
 --
 -- AUTO_INCREMENT for table `tracking_history`

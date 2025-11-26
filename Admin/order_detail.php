@@ -11,6 +11,7 @@ $is_rtl = is_rtl();
 
 <?php include 'pages/head.php'; ?>
 <?php include 'admin.php'; ?>
+<?php checkEmployeeAccess(['orders.php', 'order_detail.php']); ?>
 
 <body>
     <div id="app">
@@ -153,7 +154,7 @@ $is_rtl = is_rtl();
                                     <div class="info-grid">
                                         <div class="info-item">
                                             <label><?php __e('admin_amount'); ?></label>
-                                            <div class="info-value amount-value">$<?php echo number_format(floatval($row['total_fee']), 2); ?></div>
+                                            <div class="info-value amount-value">SAR<?php echo number_format(floatval($row['total_fee']), 2); ?></div>
                                         </div>
                                         <div class="info-item">
                                             <label><?php __e('admin_payment_method'); ?></label>
@@ -193,50 +194,148 @@ $is_rtl = is_rtl();
                                 </div>
 
                                 <?php
-                                // Get all statuses and determine which are active
-                                $current_status = $row['tracking_status'];
-                                $statuses = [
-                                    1 => ['icon' => 'fa-shopping-cart', 'text' => __t('tracking_status_placed'), 'date' => date('d M H:i', strtotime($row['date_updated']))],
-                                    2 => ['icon' => 'fa-box', 'text' => __t('tracking_status_preparing'), 'date' => ''],
-                                    3 => ['icon' => 'fa-hand-holding-box', 'text' => __t('tracking_status_dropoff'), 'date' => ''],
-                                    4 => ['icon' => 'fa-truck-pickup', 'text' => __t('tracking_status_picked'), 'date' => ''],
-                                    5 => ['icon' => 'fa-warehouse', 'text' => __t('tracking_status_sorting'), 'date' => ''],
-                                    6 => ['icon' => 'fa-truck', 'text' => __t('tracking_status_departed'), 'date' => ''],
-                                    7 => ['icon' => 'fa-building', 'text' => __t('tracking_status_hub'), 'date' => ''],
-                                    8 => ['icon' => 'fa-truck-fast', 'text' => __t('tracking_status_out_delivery'), 'date' => ''],
-                                    9 => ['icon' => 'fa-exclamation-triangle', 'text' => __t('tracking_status_unsuccessful'), 'date' => ''],
-                                    10 => ['icon' => 'fa-store', 'text' => __t('tracking_status_collection'), 'date' => ''],
-                                    11 => ['icon' => 'fa-circle-check', 'text' => __t('tracking_status_delivered'), 'date' => ''],
-                                ];
-                                
-                                // Map old statuses to new ones for backward compatibility
-                                $status_mapping = [
-                                    1 => 1,  // Pending -> Order is placed
-                                    2 => 2,  // Prepare Order -> Seller is preparing
-                                    3 => 6,  // Shipped -> Departed from sorting
-                                    4 => 11, // Delivered -> Parcel has been delivered
-                                ];
-                                
-                                if (isset($status_mapping[$current_status])) {
-                                    $current_status = $status_mapping[$current_status];
+                                // Get status history with timestamps - only show statuses that were actually reached
+                                $status_history = [];
+                                $history_result = getStatusHistory($request_id);
+                                while ($history_row = mysqli_fetch_assoc($history_result)) {
+                                    $status_history[$history_row['status']] = [
+                                        'date' => $history_row['status_date'],
+                                        'timestamp' => strtotime($history_row['status_date'])
+                                    ];
                                 }
+                                
+                                // Set default date for status 1 if no history exists (order creation)
+                                if (!isset($status_history[1])) {
+                                    $status_history[1] = [
+                                        'date' => $row['date_updated'],
+                                        'timestamp' => strtotime($row['date_updated'])
+                                    ];
+                                }
+                                
+                                // Define default statuses with their details
+                                $default_statuses_def = [
+                                    1 => ['icon' => 'fa-shopping-cart', 'text' => __t('tracking_status_placed')],
+                                    2 => ['icon' => 'fa-box', 'text' => __t('tracking_status_preparing')],
+                                    3 => ['icon' => 'fa-hand-holding-box', 'text' => __t('tracking_status_dropoff')],
+                                    4 => ['icon' => 'fa-truck-pickup', 'text' => __t('tracking_status_picked')],
+                                    5 => ['icon' => 'fa-warehouse', 'text' => __t('tracking_status_sorting')],
+                                    6 => ['icon' => 'fa-truck', 'text' => __t('tracking_status_departed')],
+                                    7 => ['icon' => 'fa-building', 'text' => __t('tracking_status_hub')],
+                                    8 => ['icon' => 'fa-truck-fast', 'text' => __t('tracking_status_out_delivery')],
+                                    9 => ['icon' => 'fa-exclamation-triangle', 'text' => __t('tracking_status_unsuccessful')],
+                                    10 => ['icon' => 'fa-store', 'text' => __t('tracking_status_collection')],
+                                    11 => ['icon' => 'fa-circle-check', 'text' => __t('tracking_status_delivered')],
+                                    12 => ['icon' => 'fa-times-circle', 'text' => __t('tracking_status_canceled')],
+                                ];
+                                
+                                // Get custom statuses
+                                $custom_statuses_map = [];
+                                $custom_statuses_result = getAllCustomStatuses();
+                                $custom_start_id = 100;
+                                if ($custom_statuses_result && mysqli_num_rows($custom_statuses_result) > 0) {
+                                    while ($custom_row = mysqli_fetch_assoc($custom_statuses_result)) {
+                                        $custom_id = $custom_start_id + intval($custom_row['status_id']);
+                                        $current_lang = get_current_lang();
+                                        $status_text = ($current_lang === 'ar') ? $custom_row['status_name_ar'] : $custom_row['status_name_en'];
+                                        $custom_statuses_map[$custom_id] = [
+                                            'icon' => $custom_row['status_icon'],
+                                            'text' => $status_text
+                                        ];
+                                    }
+                                }
+                                
+                                // Combine default and custom statuses
+                                $all_statuses_def = array_merge($default_statuses_def, $custom_statuses_map);
+                                
+                                // Only show statuses that have been reached (have timestamps)
+                                // Sort by timestamp to show in chronological order
+                                $reached_statuses = [];
+                                foreach ($status_history as $status_id => $history_data) {
+                                    if (isset($all_statuses_def[$status_id])) {
+                                        $reached_statuses[$status_id] = [
+                                            'info' => $all_statuses_def[$status_id],
+                                            'date' => $history_data['date'],
+                                            'timestamp' => $history_data['timestamp']
+                                        ];
+                                    } else {
+                                        // Status not found in definitions - try to get it from database (might be a custom status)
+                                        // Check if it's a custom status (ID >= 100)
+                                        if (intval($status_id) >= 100) {
+                                            $custom_db_id = intval($status_id) - 100;
+                                            $custom_status = getCustomStatusById($custom_db_id);
+                                            if ($custom_status) {
+                                                $current_lang = get_current_lang();
+                                                $status_text = ($current_lang === 'ar') ? $custom_status['status_name_ar'] : $custom_status['status_name_en'];
+                                                $reached_statuses[$status_id] = [
+                                                    'info' => [
+                                                        'icon' => $custom_status['status_icon'],
+                                                        'text' => $status_text
+                                                    ],
+                                                    'date' => $history_data['date'],
+                                                    'timestamp' => $history_data['timestamp']
+                                                ];
+                                            } else {
+                                                // Custom status was deleted
+                                                $reached_statuses[$status_id] = [
+                                                    'info' => ['icon' => 'fa-circle', 'text' => 'Status ' . $status_id],
+                                                    'date' => $history_data['date'],
+                                                    'timestamp' => $history_data['timestamp']
+                                                ];
+                                            }
+                                        } else {
+                                            // Default status not found - should not happen, but handle gracefully
+                                            $reached_statuses[$status_id] = [
+                                                'info' => ['icon' => 'fa-circle', 'text' => 'Status ' . $status_id],
+                                                'date' => $history_data['date'],
+                                                'timestamp' => $history_data['timestamp']
+                                            ];
+                                        }
+                                    }
+                                }
+                                
+                                // Sort by timestamp (chronological order)
+                                uasort($reached_statuses, function($a, $b) {
+                                    return $a['timestamp'] - $b['timestamp'];
+                                });
+                                
+                                $current_status = intval($row['tracking_status']);
                                 ?>
                                 
                                 <div class="vertical-timeline-container">
                                     <h5 class="timeline-title"><?php __e('admin_order_tracking_timeline'); ?></h5>
                                     <div class="vertical-timeline">
                                         <?php
-                                        foreach ($statuses as $status_id => $status_info) {
-                                            $is_active = $current_status >= $status_id;
-                                            $is_current = $current_status == $status_id;
+                                        $status_count = 0;
+                                        $total_statuses = count($reached_statuses);
+                                        
+                                        foreach ($reached_statuses as $status_id => $status_data) {
+                                            $status_count++;
+                                            $is_current = ($current_status == $status_id);
+                                            $is_last = ($status_count == $total_statuses);
+                                            
+                                            $status_date = date('d M H:i', $status_data['timestamp']);
                                             ?>
-                                            <div class="timeline-item <?php echo $is_active ? 'active' : ''; ?> <?php echo $is_current ? 'current' : ''; ?>">
+                                            <div class="timeline-item active <?php echo $is_current ? 'current' : ''; ?> <?php echo $is_last ? 'last' : ''; ?>">
                                                 <div class="timeline-dot">
-                                                    <i class="fa <?php echo $status_info['icon']; ?>"></i>
+                                                    <i class="fa <?php echo $status_data['info']['icon']; ?>"></i>
                                                 </div>
                                                 <div class="timeline-content">
-                                                    <div class="timeline-date"><?php echo $status_info['date'] ?: date('d M H:i'); ?></div>
-                                                    <div class="timeline-text"><?php echo $status_info['text']; ?></div>
+                                                    <div class="timeline-date"><?php echo $status_date; ?></div>
+                                                    <div class="timeline-text"><?php echo htmlspecialchars($status_data['info']['text']); ?></div>
+                                                </div>
+                                            </div>
+                                            <?php
+                                        }
+                                        
+                                        // If no statuses reached yet, show a message
+                                        if (empty($reached_statuses)) {
+                                            ?>
+                                            <div class="timeline-item">
+                                                <div class="timeline-dot">
+                                                    <i class="fa fa-info-circle"></i>
+                                                </div>
+                                                <div class="timeline-content">
+                                                    <div class="timeline-text"><?php __e('admin_no_status_history'); ?></div>
                                                 </div>
                                             </div>
                                             <?php
@@ -249,26 +348,152 @@ $is_rtl = is_rtl();
 
                             <div class="order-detail-footer">
                                 <div class="action-controls">
-                                    <div class="control-group">
-                                        <label for="tracking_status" class="control-label"><?php __e('admin_order_status'); ?></label>
-                                        <select
-                                            onchange='updateData(this, "<?php echo $request_id; ?>","tracking_status", "request", "request_id")'
-                                            id="tracking_status <?php echo $request_id; ?>" 
-                                            class='form-control-modern'
-                                            name="tracking_status">
-                                            <option value="1" <?php if ($row['tracking_status'] == "1") echo "selected"; ?>><?php __e('tracking_status_placed'); ?></option>
-                                            <option value="2" <?php if ($row['tracking_status'] == "2") echo "selected"; ?>><?php __e('tracking_status_preparing'); ?></option>
-                                            <option value="3" <?php if ($row['tracking_status'] == "3") echo "selected"; ?>><?php __e('tracking_status_dropoff'); ?></option>
-                                            <option value="4" <?php if ($row['tracking_status'] == "4") echo "selected"; ?>><?php __e('tracking_status_picked'); ?></option>
-                                            <option value="5" <?php if ($row['tracking_status'] == "5") echo "selected"; ?>><?php __e('tracking_status_sorting'); ?></option>
-                                            <option value="6" <?php if ($row['tracking_status'] == "6") echo "selected"; ?>><?php __e('tracking_status_departed'); ?></option>
-                                            <option value="7" <?php if ($row['tracking_status'] == "7") echo "selected"; ?>><?php __e('tracking_status_hub'); ?></option>
-                                            <option value="8" <?php if ($row['tracking_status'] == "8") echo "selected"; ?>><?php __e('tracking_status_out_delivery'); ?></option>
-                                            <option value="9" <?php if ($row['tracking_status'] == "9") echo "selected"; ?>><?php __e('tracking_status_unsuccessful'); ?></option>
-                                            <option value="10" <?php if ($row['tracking_status'] == "10") echo "selected"; ?>><?php __e('tracking_status_collection'); ?></option>
-                                            <option value="11" <?php if ($row['tracking_status'] == "11") echo "selected"; ?>><?php __e('tracking_status_delivered'); ?></option>
-                                            <option value="12" <?php if ($row['tracking_status'] == "12" || $row['tracking_status'] == "5") echo "selected"; ?>><?php __e('tracking_status_canceled'); ?></option>
-                                        </select>
+                                    <div class="control-group status-control-group">
+                                        <label for="tracking_status" class="control-label">
+                                            <i class="bi bi-arrow-repeat"></i> <?php __e('admin_order_status'); ?>
+                                        </label>
+                                        
+                                        <?php
+                                        // Get current status and next valid statuses
+                                        $current_status = intval($row['tracking_status']);
+                                        $next_statuses = getNextValidStatuses($current_status);
+                                        
+                                        // Get all available statuses (default + custom)
+                                        $all_statuses = [];
+                                        
+                                        // Default statuses
+                                        $default_statuses = [
+                                            1 => ['icon' => 'fa-shopping-cart', 'text' => __t('tracking_status_placed'), 'group' => 'order'],
+                                            2 => ['icon' => 'fa-box', 'text' => __t('tracking_status_preparing'), 'group' => 'order'],
+                                            3 => ['icon' => 'fa-hand-holding-box', 'text' => __t('tracking_status_dropoff'), 'group' => 'shipping'],
+                                            4 => ['icon' => 'fa-truck-pickup', 'text' => __t('tracking_status_picked'), 'group' => 'shipping'],
+                                            5 => ['icon' => 'fa-warehouse', 'text' => __t('tracking_status_sorting_arrived'), 'group' => 'shipping'],
+                                            6 => ['icon' => 'fa-truck', 'text' => __t('tracking_status_sorting_departed'), 'group' => 'shipping'],
+                                            7 => ['icon' => 'fa-building', 'text' => __t('tracking_status_hub_arrived'), 'group' => 'shipping'],
+                                            8 => ['icon' => 'fa-truck-fast', 'text' => __t('tracking_status_out_delivery'), 'group' => 'delivery'],
+                                            9 => ['icon' => 'fa-exclamation-triangle', 'text' => __t('tracking_status_delivery_failed'), 'group' => 'special'],
+                                            10 => ['icon' => 'fa-store', 'text' => __t('tracking_status_ready_collection'), 'group' => 'special'],
+                                            11 => ['icon' => 'fa-circle-check', 'text' => __t('tracking_status_delivered'), 'group' => 'delivery'],
+                                            12 => ['icon' => 'fa-times-circle', 'text' => __t('tracking_status_canceled'), 'group' => 'special'],
+                                        ];
+                                        
+                                        // Add default statuses
+                                        foreach ($default_statuses as $id => $status) {
+                                            $all_statuses[$id] = $status;
+                                        }
+                                        
+                                        // Get custom statuses from database (using status_id starting from 100 to avoid conflicts)
+                                        $custom_statuses_result = getAllCustomStatuses();
+                                        $custom_start_id = 100;
+                                        while ($custom_row = mysqli_fetch_assoc($custom_statuses_result)) {
+                                            $custom_id = $custom_start_id + $custom_row['status_id'];
+                                            $current_lang = get_current_lang();
+                                            $status_text = ($current_lang === 'ar') ? $custom_row['status_name_ar'] : $custom_row['status_name_en'];
+                                            $all_statuses[$custom_id] = [
+                                                'icon' => $custom_row['status_icon'],
+                                                'text' => $status_text,
+                                                'group' => 'custom',
+                                                'custom' => true,
+                                                'custom_id' => $custom_row['status_id']
+                                            ];
+                                        }
+                                        
+                                        // Get current status display info
+                                        $current_status_info = $all_statuses[$current_status] ?? ['icon' => 'fa-circle', 'text' => 'Status ' . $current_status];
+                                        ?>
+                                        
+                                        <div class="status-select-wrapper">
+                                            <select
+                                                onchange='handleStatusChange(this, "<?php echo $request_id; ?>", <?php echo $current_status; ?>)'
+                                                id="tracking_status <?php echo $request_id; ?>" 
+                                                class='form-control-modern status-select'
+                                                name="tracking_status">
+                                                <option value="<?php echo $current_status; ?>" selected disabled>
+                                                    <i class="fa <?php echo $current_status_info['icon']; ?>"></i> <?php echo htmlspecialchars($current_status_info['text']); ?> (<?php __e('admin_current_status'); ?>)
+                                                </option>
+                                                
+                                                <?php if (empty($next_statuses)): ?>
+                                                    <option disabled><?php __e('admin_no_next_status'); ?></option>
+                                                <?php else: ?>
+                                                    <optgroup label="➡️ <?php __e('admin_next_steps'); ?>">
+                                                        <?php foreach ($next_statuses as $next_status): ?>
+                                                            <?php if (isset($all_statuses[$next_status])): ?>
+                                                                <option value="<?php echo $next_status; ?>">
+                                                                    <i class="fa <?php echo $all_statuses[$next_status]['icon']; ?>"></i> <?php echo htmlspecialchars($all_statuses[$next_status]['text']); ?>
+                                                                </option>
+                                                            <?php endif; ?>
+                                                        <?php endforeach; ?>
+                                                    </optgroup>
+                                                <?php endif; ?>
+                                                
+                                                <optgroup label="➕ <?php __e('admin_add_custom_status'); ?>">
+                                                    <option value="__add_new__"><?php __e('admin_add_new_status'); ?></option>
+                                                </optgroup>
+                                            </select>
+                                            <div class="status-select-icon">
+                                                <i class="bi bi-chevron-down"></i>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Custom Status Input Modal -->
+                                        <div class="custom-status-input-wrapper" id="custom_status_input_<?php echo $request_id; ?>" style="display: none;">
+                                            <div class="custom-status-input-box">
+                                                <div class="custom-status-header">
+                                                    <h6><?php __e('admin_add_custom_status'); ?></h6>
+                                                    <button type="button" class="btn-close-custom" onclick="cancelCustomStatus('<?php echo $request_id; ?>', <?php echo $current_status; ?>)">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="custom-status-body">
+                                                    <div class="form-field-custom">
+                                                        <label><?php __e('admin_status_name_en'); ?></label>
+                                                        <input type="text" 
+                                                               id="custom_status_name_en_<?php echo $request_id; ?>"
+                                                               class="form-control-custom" 
+                                                               placeholder="<?php __e('admin_enter_status_name_en'); ?>">
+                                                    </div>
+                                                    <div class="form-field-custom">
+                                                        <label><?php __e('admin_status_name_ar'); ?></label>
+                                                        <input type="text" 
+                                                               id="custom_status_name_ar_<?php echo $request_id; ?>"
+                                                               class="form-control-custom" 
+                                                               placeholder="<?php __e('admin_enter_status_name_ar'); ?>">
+                                                    </div>
+                                                    <div class="form-field-custom">
+                                                        <label><?php __e('admin_status_icon'); ?></label>
+                                                        <select id="custom_status_icon_<?php echo $request_id; ?>" class="form-control-custom">
+                                                            <option value="fa-circle">Default Circle</option>
+                                                            <option value="fa-check-circle">Check Circle</option>
+                                                            <option value="fa-truck">Truck</option>
+                                                            <option value="fa-box">Box</option>
+                                                            <option value="fa-warehouse">Warehouse</option>
+                                                            <option value="fa-building">Building</option>
+                                                            <option value="fa-store">Store</option>
+                                                            <option value="fa-exclamation-triangle">Warning</option>
+                                                            <option value="fa-times-circle">Cancel</option>
+                                                            <option value="fa-shopping-cart">Shopping Cart</option>
+                                                            <option value="fa-hand-holding-box">Hand Holding</option>
+                                                            <option value="fa-truck-pickup">Truck Pickup</option>
+                                                            <option value="fa-truck-fast">Fast Truck</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="custom-status-actions">
+                                                        <button type="button" 
+                                                                class="btn-save-custom-status"
+                                                                onclick="saveCustomStatus('<?php echo $request_id; ?>', <?php echo $current_status; ?>)">
+                                                            <i class="bi bi-check-circle"></i> <?php __e('admin_save_and_apply'); ?>
+                                                        </button>
+                                                        <button type="button" 
+                                                                class="btn-cancel-custom-status"
+                                                                onclick="cancelCustomStatus('<?php echo $request_id; ?>', <?php echo $current_status; ?>)">
+                                                            <i class="bi bi-x-circle"></i> <?php __e('cancel'); ?>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <small class="status-help-text"><?php __e('admin_status_step_by_step_note'); ?></small>
                                     </div>
                                     <div class="control-group">
                                         <label for="payment_status" class="control-label"><?php __e('admin_payment_status'); ?></label>
@@ -317,6 +542,337 @@ $is_rtl = is_rtl();
     <script src="assets/vendors/perfect-scrollbar/perfect-scrollbar.min.js"></script>
     <script src="assets/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/main.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <script>
+        function handleStatusChange(element, request_id, current_status) {
+            const selectedValue = element.value;
+            
+            if (selectedValue === '__add_new__') {
+                // Show custom status input
+                const inputWrapper = document.getElementById('custom_status_input_' + request_id);
+                if (inputWrapper) {
+                    inputWrapper.style.display = 'block';
+                    document.getElementById('custom_status_name_en_' + request_id).focus();
+                }
+                // Reset select to current value
+                element.value = current_status;
+            } else {
+                // Update status normally
+                updateStatusStepByStep(element, request_id, current_status);
+            }
+        }
+        
+        function saveCustomStatus(request_id, current_status) {
+            const nameEn = document.getElementById('custom_status_name_en_' + request_id).value.trim();
+            const nameAr = document.getElementById('custom_status_name_ar_' + request_id).value.trim();
+            const icon = document.getElementById('custom_status_icon_' + request_id).value;
+            
+            if (!nameEn || !nameAr) {
+                alert('<?php echo addslashes(__t('admin_please_enter_status_names')); ?>');
+                return;
+            }
+            
+            // Show loading
+            const saveBtn = document.querySelector('#custom_status_input_' + request_id + ' .btn-save-custom-status');
+            const originalHtml = saveBtn.innerHTML;
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> <?php echo addslashes(__t('admin_saving')); ?>...';
+            
+            // Add custom status
+            $.ajax({
+                method: "POST",
+                url: "../server/api.php?function_code=addCustomStatus",
+                data: {
+                    name_en: nameEn,
+                    name_ar: nameAr,
+                    icon: icon
+                },
+                dataType: 'json',
+                success: function(response) {
+                    let result = response;
+                    if (typeof result === 'string') {
+                        try {
+                            result = JSON.parse(result);
+                        } catch (e) {
+                            result = { success: false, error: 'Invalid response' };
+                        }
+                    }
+                    
+                    if (result.success && result.status_id) {
+                        // Calculate the new status ID (100 + custom_id)
+                        const newStatusId = 100 + result.status_id;
+                        
+                        // Update the order with the new custom status
+                        updateStatusWithCustomStatus(request_id, newStatusId, current_status);
+                    } else {
+                        alert(result.error || '<?php echo addslashes(__t('admin_failed_to_save_status')); ?>');
+                        saveBtn.disabled = false;
+                        saveBtn.innerHTML = originalHtml;
+                    }
+                },
+                error: function(xhr, status, error) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = originalHtml;
+                    let errorMsg = '<?php echo addslashes(__t('admin_failed_to_save_status')); ?>';
+                    try {
+                        if (xhr.responseText) {
+                            const response = JSON.parse(xhr.responseText);
+                            if (response.error) {
+                                errorMsg = response.error;
+                            }
+                        }
+                    } catch (e) {
+                        // Use default error
+                    }
+                    alert(errorMsg);
+                }
+            });
+        }
+        
+        function updateStatusWithCustomStatus(request_id, new_status_id, current_status) {
+            const data = {
+                id: request_id,
+                field: 'tracking_status',
+                value: new_status_id,
+                id_fild: 'request_id',
+                table: 'request'
+            };
+
+            $.ajax({
+                method: "POST",
+                url: "../server/api.php?function_code=updateData",
+                data: data,
+                dataType: 'json',
+                success: function(response) {
+                    let result = response;
+                    if (typeof result === 'string') {
+                        try {
+                            result = JSON.parse(result);
+                        } catch (e) {
+                            result = { success: true };
+                        }
+                    }
+                    
+                    if (result && result.success === false) {
+                        alert(result.error || '<?php echo addslashes(__t('admin_status_change_error')); ?>');
+                    } else {
+                        // Hide input wrapper
+                        document.getElementById('custom_status_input_' + request_id).style.display = 'none';
+                        // Clear inputs
+                        document.getElementById('custom_status_name_en_' + request_id).value = '';
+                        document.getElementById('custom_status_name_ar_' + request_id).value = '';
+                        // Reload page to show new status
+                        showStatusChangeSuccess(function() {
+                            window.location.reload();
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert('<?php echo addslashes(__t('admin_failed_to_update_status')); ?>');
+                }
+            });
+        }
+        
+        function cancelCustomStatus(request_id, current_status) {
+            const inputWrapper = document.getElementById('custom_status_input_' + request_id);
+            if (inputWrapper) {
+                inputWrapper.style.display = 'none';
+                // Clear inputs
+                document.getElementById('custom_status_name_en_' + request_id).value = '';
+                document.getElementById('custom_status_name_ar_' + request_id).value = '';
+            }
+            // Reset select
+            const select = document.getElementById('tracking_status ' + request_id);
+            if (select) {
+                select.value = current_status;
+            }
+        }
+        
+        function updateStatusStepByStep(element, request_id, current_status) {
+            const new_status = parseInt(element.value);
+            
+            // Validate on client side too
+            if (new_status === current_status || isNaN(new_status)) {
+                // Reset to current status
+                element.value = current_status;
+                return; // No change
+            }
+            
+            // Prevent multiple clicks
+            if (element.disabled) {
+                element.value = current_status; // Reset
+                return;
+            }
+            
+            // Show loading overlay immediately to prevent visual jumps
+            showStatusChangeLoading();
+            
+            // Disable the select and prevent further changes
+            element.disabled = true;
+            element.style.pointerEvents = 'none';
+            const originalValue = current_status;
+            
+            const data = {
+                id: request_id,
+                field: 'tracking_status',
+                value: new_status,
+                id_fild: 'request_id',
+                table: 'request'
+            };
+
+            $.ajax({
+                method: "POST",
+                url: "../server/api.php?function_code=updateData",
+                data: data,
+                timeout: 10000, // 10 second timeout
+                dataType: 'json', // Expect JSON response
+                success: function(response) {
+                    // Response should already be parsed as JSON
+                    let result = response;
+                    
+                    // Handle case where response might be a string
+                    if (typeof result === 'string') {
+                        try {
+                            result = JSON.parse(result);
+                        } catch (e) {
+                            // If parsing fails, assume success if response is truthy
+                            result = { success: true };
+                        }
+                    }
+                    
+                    if (result && result.success === false) {
+                        hideStatusChangeLoading();
+                        alert(result.error || '<?php echo addslashes(__t('admin_status_change_error')); ?>');
+                        element.value = originalValue;
+                        element.disabled = false;
+                        element.style.pointerEvents = 'auto';
+                    } else {
+                        // Show success message briefly before reload
+                        showStatusChangeSuccess(function() {
+                            // Smooth reload with scroll position maintained
+                            window.location.href = window.location.href.split('#')[0];
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    hideStatusChangeLoading();
+                    let errorMsg = '<?php echo addslashes(__t('admin_status_change_error')); ?>';
+                    try {
+                        if (xhr.responseText) {
+                            const response = JSON.parse(xhr.responseText);
+                            if (response && response.error) {
+                                errorMsg = response.error;
+                            }
+                        }
+                    } catch (e) {
+                        // Use default error message
+                        if (xhr.status === 400) {
+                            errorMsg = '<?php echo addslashes(__t('admin_status_change_error')); ?>';
+                        }
+                    }
+                    alert(errorMsg);
+                    element.value = originalValue;
+                    element.disabled = false;
+                    element.style.pointerEvents = 'auto';
+                }
+            });
+        }
+        
+        function showStatusChangeLoading() {
+            // Create or show loading overlay
+            let overlay = document.getElementById('status-change-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'status-change-overlay';
+                overlay.className = 'status-change-overlay';
+                overlay.innerHTML = `
+                    <div class="status-change-spinner">
+                        <div class="spinner"></div>
+                        <p><?php echo addslashes(__t('admin_updating_status')); ?></p>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+            }
+            overlay.style.display = 'flex';
+        }
+        
+        function hideStatusChangeLoading() {
+            const overlay = document.getElementById('status-change-overlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+            }
+        }
+        
+        function showStatusChangeSuccess(callback) {
+            const overlay = document.getElementById('status-change-overlay');
+            if (overlay) {
+                overlay.innerHTML = `
+                    <div class="status-change-success">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <p><?php echo addslashes(__t('admin_status_updated')); ?></p>
+                    </div>
+                `;
+                // Wait 1 second to show success message, then reload smoothly
+                setTimeout(function() {
+                    hideStatusChangeLoading();
+                    // Small delay before reload to ensure smooth transition
+                    setTimeout(callback, 200);
+                }, 1000);
+            } else {
+                setTimeout(callback, 200);
+            }
+        }
+        
+        function updateData(element, id, field, table, id_field) {
+            const value = element.value;
+            const data = {
+                id: id,
+                field: field,
+                value: value,
+                id_fild: id_field,
+                table: table
+            };
+
+            $.ajax({
+                method: "POST",
+                url: "../server/api.php?function_code=updateData",
+                data: data,
+                success: function(response) {
+                    // Handle success
+                    console.log("Update successful:", response);
+                },
+                error: function(error) {
+                    // Handle error
+                    console.error("Update failed:", error);
+                    alert("Failed to update data.");
+                }
+            });
+        }
+        
+        function deleteData(id, table, id_field) {
+            if (confirm("<?php __e('admin_confirm_delete'); ?>")) {
+                const data = {
+                    id: id,
+                    table: table,
+                    id_fild: id_field
+                };
+
+                $.ajax({
+                    method: "POST",
+                    url: "../server/api.php?function_code=deleteData",
+                    data: data,
+                    success: function(response) {
+                        location.reload();
+                    },
+                    error: function(error) {
+                        console.error("Delete failed:", error);
+                        alert("Failed to delete data.");
+                    }
+                });
+            }
+        }
+    </script>
     
     <script>
         function downloadQRCode(qrPath, trackingCode) {
@@ -790,6 +1346,447 @@ $is_rtl = is_rtl();
 
     .form-control-modern:hover {
         border-color: #ced4da;
+    }
+
+    /* Enhanced Status Select Design */
+    .status-control-group {
+        position: relative;
+    }
+
+    .status-control-group .control-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .status-control-group .control-label i {
+        font-size: 14px;
+        color: #667eea;
+    }
+
+    .status-select-wrapper {
+        position: relative;
+    }
+
+    .status-select {
+        appearance: none;
+        padding-right: 45px;
+        padding-left: 12px;
+        background-image: none;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .status-select:focus {
+        background: #ffffff;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+    }
+
+    .status-select option {
+        padding: 10px 12px;
+        font-weight: 500;
+        background: #ffffff;
+        color: #2c3e50;
+    }
+
+    .status-select option:checked,
+    .status-select option[selected] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #ffffff;
+        font-weight: 600;
+    }
+    
+    .status-select option:disabled {
+        background: #f8f9fa;
+        color: #6c757d;
+        font-style: italic;
+    }
+
+    .status-select optgroup {
+        font-weight: 700;
+        font-size: 12px;
+        color: #667eea;
+        background: #f8f9fa;
+        padding: 8px 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .status-select optgroup option {
+        padding-left: 24px;
+        font-weight: 500;
+        color: #495057;
+    }
+
+    .status-select optgroup option:checked {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #ffffff;
+    }
+
+    .status-select-icon {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        color: #667eea;
+        font-size: 16px;
+        transition: transform 0.2s ease;
+        z-index: 1;
+    }
+
+    .status-select-wrapper:focus-within .status-select-icon {
+        transform: translateY(-50%) rotate(180deg);
+    }
+
+    .status-help-text {
+        font-size: 11px;
+        color: #6c757d;
+        margin-top: 8px;
+        font-style: italic;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .status-help-text::before {
+        content: "ℹ️";
+        font-size: 12px;
+    }
+
+    /* Status Progress Indicator */
+    .status-progress-indicator {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 16px;
+        padding: 16px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        flex-wrap: wrap;
+    }
+
+    .current-status-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 13px;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .status-badge-icon {
+        font-size: 16px;
+    }
+
+    .status-badge-text {
+        white-space: nowrap;
+    }
+
+    .status-arrow {
+        font-size: 20px;
+        color: #667eea;
+        font-weight: bold;
+    }
+
+    .next-statuses {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .next-status-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        background: #ffffff;
+        border: 2px solid #667eea;
+        color: #667eea;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 13px;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .next-status-badge:hover {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .status-final-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 16px;
+        padding: 12px 16px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 13px;
+    }
+
+    .status-final-badge i {
+        font-size: 18px;
+    }
+
+    .status-select:disabled {
+        background: #f8f9fa;
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+
+    /* Custom Status Input Styles */
+    .custom-status-input-wrapper {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        backdrop-filter: blur(4px);
+    }
+
+    .custom-status-input-box {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        width: 90%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .custom-status-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px 24px;
+        border-radius: 16px 16px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .custom-status-header h6 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .btn-close-custom {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 18px;
+    }
+
+    .btn-close-custom:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: rotate(90deg);
+    }
+
+    .custom-status-body {
+        padding: 24px;
+    }
+
+    .form-field-custom {
+        margin-bottom: 20px;
+    }
+
+    .form-field-custom:last-child {
+        margin-bottom: 0;
+    }
+
+    .form-field-custom label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .form-control-custom {
+        width: 100%;
+        padding: 12px 14px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.2s ease;
+        background: #f8f9fa;
+        font-family: inherit;
+    }
+
+    .form-control-custom:focus {
+        outline: none;
+        border-color: #667eea;
+        background: #ffffff;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .custom-status-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .btn-save-custom-status {
+        flex: 1;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-save-custom-status:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-save-custom-status:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .btn-cancel-custom-status {
+        flex: 1;
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .btn-cancel-custom-status:hover {
+        background: #5a6268;
+        transform: translateY(-1px);
+    }
+
+    /* Status Change Loading Overlay */
+    .status-change-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(4px);
+    }
+
+    .status-change-spinner {
+        background: white;
+        padding: 30px 40px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .status-change-spinner .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .status-change-spinner p {
+        margin: 0;
+        color: #2c3e50;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .status-change-success {
+        background: white;
+        padding: 30px 40px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .status-change-success i {
+        font-size: 48px;
+        color: #10b981;
+        margin-bottom: 16px;
+        display: block;
+    }
+
+    .status-change-success p {
+        margin: 0;
+        color: #2c3e50;
+        font-weight: 600;
+        font-size: 14px;
     }
 
     .btn-delete-action {

@@ -412,7 +412,7 @@ $is_rtl = is_rtl();
                     success: function ($data) {
                         if ($data > 0) {
                             var sum = parseInt(weight) * parseInt($data);
-                            document.getElementById("total").value = "$" + sum;
+                            document.getElementById("total").value = "SAR" + sum;
                             document.getElementById("total_fee").value = sum;
                         } else {
                             alert("This area is not in our service area");

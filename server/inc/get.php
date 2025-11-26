@@ -1,5 +1,7 @@
 <?php
 
+// Prevent multiple includes
+if (!function_exists('getAllBranch')) {
 
 function getAllBranch()
 {
@@ -98,6 +100,110 @@ function getAllTracking()
                 WHERE request.is_deleted = 0 
                 ORDER BY request.date_updated DESC";
     return mysqli_query($con, $viewcat);
+}
+
+function getStatusHistory($request_id)
+{
+    include 'connection.php';
+    
+    $request_id = mysqli_real_escape_string($con, $request_id);
+    $query = "SELECT * FROM request_status_history WHERE request_id = '$request_id' ORDER BY status_date ASC";
+    return mysqli_query($con, $query);
+}
+
+function getStatusTimestamp($request_id, $status)
+{
+    include 'connection.php';
+    
+    $request_id = mysqli_real_escape_string($con, $request_id);
+    $status = mysqli_real_escape_string($con, $status);
+    $query = "SELECT status_date FROM request_status_history WHERE request_id = '$request_id' AND status = '$status' ORDER BY status_date ASC LIMIT 1";
+    $result = mysqli_query($con, $query);
+    if ($row = mysqli_fetch_assoc($result)) {
+        return $row['status_date'];
+    }
+    return null;
+}
+
+function getAllCustomStatuses()
+{
+    include 'connection.php';
+    
+    $query = "SELECT * FROM custom_statuses WHERE is_active = 1 ORDER BY status_order ASC, status_id ASC";
+    return mysqli_query($con, $query);
+}
+
+function getCustomStatusById($status_id)
+{
+    include 'connection.php';
+    
+    $status_id = mysqli_real_escape_string($con, $status_id);
+    $query = "SELECT * FROM custom_statuses WHERE status_id = '$status_id' AND is_active = 1 LIMIT 1";
+    $result = mysqli_query($con, $query);
+    return mysqli_fetch_assoc($result);
+}
+
+function addCustomStatus($name_en, $name_ar, $icon = 'fa-circle')
+{
+    include 'connection.php';
+    
+    $name_en = mysqli_real_escape_string($con, $name_en);
+    $name_ar = mysqli_real_escape_string($con, $name_ar);
+    $icon = mysqli_real_escape_string($con, $icon);
+    
+    // Get max order
+    $max_order_query = "SELECT MAX(status_order) as max_order FROM custom_statuses";
+    $max_result = mysqli_query($con, $max_order_query);
+    $max_row = mysqli_fetch_assoc($max_result);
+    $new_order = ($max_row['max_order'] ?? 0) + 1;
+    
+    $query = "INSERT INTO custom_statuses (status_name_en, status_name_ar, status_icon, status_order) 
+              VALUES ('$name_en', '$name_ar', '$icon', '$new_order')";
+    
+    if (mysqli_query($con, $query)) {
+        return mysqli_insert_id($con);
+    }
+    return false;
+}
+
+function getNextValidStatuses($current_status)
+{
+    // Define status flow - admin can only move forward step by step
+    $status_flow = [
+        1 => [2, 12],  // From "Order placed" can go to "Prepare Order" or "Canceled"
+        2 => [3, 12],  // From "Prepare Order" can go to "Drop-off" or "Canceled"
+        3 => [4],      // From "Drop-off" can go to "Picked up"
+        4 => [5],      // From "Picked up" can go to "Sorting arrived"
+        5 => [6],      // From "Sorting arrived" can go to "Sorting departed"
+        6 => [7],      // From "Sorting departed" can go to "Hub arrived"
+        7 => [8],      // From "Hub arrived" can go to "Out for delivery"
+        8 => [9, 10, 11], // From "Out for delivery" can go to "Failed", "Collection", or "Delivered"
+        9 => [8, 10, 11], // From "Failed" can retry delivery, go to collection, or mark delivered
+        10 => [11],    // From "Collection" can go to "Delivered"
+        11 => [],       // "Delivered" is final
+        12 => [],       // "Canceled" is final
+    ];
+    
+    $next_statuses = isset($status_flow[$current_status]) ? $status_flow[$current_status] : [];
+    
+    // Add all custom statuses (ID >= 100) as valid next steps from any status
+    // This allows flexibility for custom workflows
+    $custom_statuses_result = getAllCustomStatuses();
+    $custom_start_id = 100;
+    while ($custom_row = mysqli_fetch_assoc($custom_statuses_result)) {
+        $custom_id = $custom_start_id + $custom_row['status_id'];
+        if (!in_array($custom_id, $next_statuses)) {
+            $next_statuses[] = $custom_id;
+        }
+    }
+    
+    return $next_statuses;
+}
+
+function canChangeToStatus($current_status, $target_status)
+{
+    $next_statuses = getNextValidStatuses($current_status);
+    return in_array($target_status, $next_statuses);
 }
 
 function getRequestById($request_id)
@@ -435,3 +541,5 @@ function getAllOrderItems($order_id)
     $viewcat = "SELECT * FROM order_items join products on order_items.pid = products.pid WHERE order_items.order_id = '$order_id'";
     return mysqli_query($con, $viewcat);
 }
+
+} // End of function_exists check

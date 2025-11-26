@@ -11,6 +11,7 @@ $is_rtl = is_rtl();
 
 <?php include 'pages/head.php'; ?>
 <?php include 'admin.php'; ?>
+<?php if (isEmployee()) { header("Location: index.php"); exit(); } ?>
 
 <body>
     <div id="app">
@@ -100,7 +101,7 @@ $is_rtl = is_rtl();
                                                 <div class="price-amount-section">
                                                     <label><?php __e('admin_price'); ?></label>
                                                     <div class="price-input-wrapper">
-                                                        <span class="currency-symbol">$</span>
+                                                        <span class="currency-symbol">SAR</span>
                                                         <input type="number" 
                                                                id="price_<?php echo $price_id; ?>"
                                                                class="form-control price-input" 
@@ -174,7 +175,7 @@ $is_rtl = is_rtl();
                         <div class="form-field">
                                 <label for="price" class="form-label">Price</label>
                             <div class="price-input-wrapper">
-                                <span class="currency-symbol">$</span>
+                                <span class="currency-symbol">SAR</span>
                                 <input type="number" 
                                        class="form-control price-input" 
                                        name="price" 

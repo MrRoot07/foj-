@@ -22,6 +22,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['email']) && isset($_PO
         if ($result && mysqli_num_rows($result) > 0) {
             $row = mysqli_fetch_assoc($result);
             $_SESSION['admin'] = $row['email'];
+            // Store user role: 'admin' if email is 'admin', otherwise 'employee'
+            $_SESSION['user_role'] = ($row['email'] == 'admin') ? 'admin' : 'employee';
+            $_SESSION['emp_id'] = $row['emp_id'];
             header("Location: index.php");
             exit();
         } else {

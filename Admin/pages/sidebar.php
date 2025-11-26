@@ -3,6 +3,10 @@
 if (!function_exists('__e')) {
     require_once __DIR__ . '/../../bootstrap/i18n.php';
 }
+// Include admin.php for role checking functions
+if (!function_exists('isAdmin')) {
+    require_once __DIR__ . '/../admin.php';
+}
 // Get current page name to determine active menu item
 $current_page = basename($_SERVER['PHP_SELF']);
 ?>
@@ -33,6 +37,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     </a>
                 </li>
 
+                <?php if (isAdmin()): ?>
                 <li class="sidebar-item-modern <?php echo ($current_page == 'customer.php' || $current_page == 'add_courier.php') ? 'active' : ''; ?>">
                     <a href="customer.php" class='sidebar-link-modern'>
                         <div class="link-icon">
@@ -56,6 +61,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         <?php endif; ?>
                     </a>
                 </li>
+                <?php endif; ?>
 
                 <li class="sidebar-item-modern <?php echo ($current_page == 'orders.php' || $current_page == 'order_detail.php' || $current_page == 'add_request.php') ? 'active' : ''; ?>">
                     <a href="orders.php" class='sidebar-link-modern'>
@@ -95,7 +101,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 </li>
                 */ ?>
 
-                <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin'): ?>
+                <?php if (isAdmin()): ?>
                     <li class="sidebar-item-modern <?php echo ($current_page == 'branch.php') ? 'active' : ''; ?>">
                         <a href="branch.php" class='sidebar-link-modern'>
                             <div class="link-icon">
@@ -107,21 +113,19 @@ $current_page = basename($_SERVER['PHP_SELF']);
                             <?php endif; ?>
                         </a>
                     </li>
-                <?php endif; ?>
 
-                <li class="sidebar-item-modern <?php echo ($current_page == 'employee.php' || $current_page == 'empolyee_edit.php') ? 'active' : ''; ?>">
-                    <a href="employee.php" class='sidebar-link-modern'>
-                        <div class="link-icon">
-                            <i class="bi bi-person-fill"></i>
-                        </div>
-                        <span class="link-text"><?php __e('admin_employees_title'); ?></span>
-                        <?php if ($current_page == 'employee.php' || $current_page == 'empolyee_edit.php'): ?>
-                            <div class="link-indicator"></div>
-                        <?php endif; ?>
-                    </a>
-                </li>
+                    <li class="sidebar-item-modern <?php echo ($current_page == 'employee.php' || $current_page == 'empolyee_edit.php') ? 'active' : ''; ?>">
+                        <a href="employee.php" class='sidebar-link-modern'>
+                            <div class="link-icon">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                            <span class="link-text"><?php __e('admin_employees_title'); ?></span>
+                            <?php if ($current_page == 'employee.php' || $current_page == 'empolyee_edit.php'): ?>
+                                <div class="link-indicator"></div>
+                            <?php endif; ?>
+                        </a>
+                    </li>
 
-                <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin'): ?>
                     <li class="sidebar-item-modern <?php echo ($current_page == 'area.php') ? 'active' : ''; ?>">
                         <a href="area.php" class='sidebar-link-modern'>
                             <div class="link-icon">
@@ -133,19 +137,6 @@ $current_page = basename($_SERVER['PHP_SELF']);
                             <?php endif; ?>
                         </a>
                     </li>
-                    <?php /* Commented out - Gallery page
-                    <li class="sidebar-item-modern <?php echo ($current_page == 'gallery.php') ? 'active' : ''; ?>">
-                        <a href="gallery.php" class='sidebar-link-modern'>
-                            <div class="link-icon">
-                                <i class="bi bi-images"></i>
-                            </div>
-                            <span class="link-text">Gallery</span>
-                            <?php if ($current_page == 'gallery.php'): ?>
-                                <div class="link-indicator"></div>
-                            <?php endif; ?>
-                        </a>
-                    </li>
-                    */ ?>
                 <?php endif; ?>
 
                 <li class="sidebar-item-modern <?php echo ($current_page == 'settings.php') ? 'active' : ''; ?>">

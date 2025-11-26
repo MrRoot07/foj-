@@ -2,6 +2,7 @@
 session_start();
 // Include i18n bootstrap
 require_once __DIR__ . '/../bootstrap/i18n.php';
+// Note: get.php is already included via pages/head.php -> server/api.php
 $companyName = "FOJ Express";
 $current_lang = get_current_lang();
 $is_rtl = is_rtl();
@@ -22,157 +23,293 @@ $is_rtl = is_rtl();
             </header>
 
             <div class="page-heading">
-                <h3><?php __e('admin_dashboard'); ?></h3>
-                <p class="text-muted"><?php __e('admin_dashboard_welcome'); ?></p>
+                <h3><?php echo isEmployee() ? __t('employee_dashboard') : __t('admin_dashboard'); ?></h3>
+                <p class="text-muted"><?php echo isEmployee() ? __t('employee_dashboard_welcome') : __t('admin_dashboard_welcome'); ?></p>
             </div>
 
             <div class="page-content">
-                <section class="row">
-                    <!-- Overview Stats -->
-                    <div class="col-12">
-                        <div class="dashboard-section">
-                            <h4 class="section-title"><?php __e('admin_overview'); ?></h4>
-                            <div class="stats-grid">
-                                <div class="stat-card stat-card-primary">
-                                    <div class="stat-icon-wrapper">
-                                        <div class="stat-icon">
-                                            <i class="bi bi-columns"></i>
-                                                </div>
-                                            </div>
-                                    <div class="stat-content">
-                                        <div class="stat-label"><?php __e('admin_branches'); ?></div>
-                                        <div class="stat-value"><?php echo dataCount('branch'); ?></div>
+                <?php if (isEmployee()): ?>
+                    <!-- Employee Dashboard -->
+                    <section class="row">
+                        <!-- Order Status Stats for Employee -->
+                        <div class="col-12">
+                            <div class="dashboard-section">
+                                <h4 class="section-title"><?php __e('employee_order_status'); ?></h4>
+                                <div class="stats-grid">
+                                    <div class="stat-card stat-card-pending">
+                                        <div class="stat-icon-wrapper">
+                                            <div class="stat-icon">
+                                                <i class="bi bi-clock-history"></i>
                                             </div>
                                         </div>
-
-                                <div class="stat-card stat-card-success">
-                                    <div class="stat-icon-wrapper">
-                                        <div class="stat-icon">
-                                            <i class="bi bi-people-fill"></i>
+                                        <div class="stat-content">
+                                            <div class="stat-label"><?php __e('admin_pending_orders'); ?></div>
+                                            <div class="stat-value"><?php echo dataCountWhere('request', ' tracking_status = 1 '); ?></div>
+                                        </div>
                                     </div>
-                                </div>
-                                    <div class="stat-content">
-                                        <div class="stat-label"><?php __e('admin_customers'); ?></div>
-                                        <div class="stat-value"><?php echo dataCount('customer'); ?></div>
-                                                </div>
-                                            </div>
 
-                                <div class="stat-card stat-card-info">
-                                    <div class="stat-icon-wrapper">
-                                        <div class="stat-icon">
-                                            <i class="bi bi-person-fill"></i>
+                                    <div class="stat-card stat-card-preparing">
+                                        <div class="stat-icon-wrapper">
+                                            <div class="stat-icon">
+                                                <i class="bi bi-box-seam"></i>
                                             </div>
                                         </div>
-                                    <div class="stat-content">
-                                        <div class="stat-label"><?php __e('admin_employees'); ?></div>
-                                        <div class="stat-value"><?php echo dataCount('employee'); ?></div>
+                                        <div class="stat-content">
+                                            <div class="stat-label"><?php __e('admin_preparing'); ?></div>
+                                            <div class="stat-value"><?php echo dataCountWhere('request', ' tracking_status = 2 '); ?></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="stat-card stat-card-delivered">
+                                        <div class="stat-icon-wrapper">
+                                            <div class="stat-icon">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                            </div>
+                                        </div>
+                                        <div class="stat-content">
+                                            <div class="stat-label"><?php __e('admin_completed_orders'); ?></div>
+                                            <div class="stat-value"><?php echo dataCountWhere('request', ' tracking_status = 11 '); ?></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="stat-card stat-card-warning">
+                                        <div class="stat-icon-wrapper">
+                                            <div class="stat-icon">
+                                                <i class="bi bi-truck"></i>
+                                            </div>
+                                        </div>
+                                        <div class="stat-content">
+                                            <div class="stat-label"><?php __e('admin_total_orders'); ?></div>
+                                            <div class="stat-value"><?php echo dataCount('request'); ?></div>
+                                        </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
 
-                                <div class="stat-card stat-card-warning">
-                                    <div class="stat-icon-wrapper">
-                                        <div class="stat-icon">
+                        <!-- Payment Stats for Employee -->
+                        <div class="col-12">
+                            <div class="dashboard-section">
+                                <h4 class="section-title"><?php __e('employee_payment_summary'); ?></h4>
+                                <div class="stats-grid">
+                                    <?php
+                                    include '../server/inc/connection.php';
+                                    $total_paid = 0;
+                                    $total_pending = 0;
+                                    $getall = getAllTracking();
+                                    while ($row = mysqli_fetch_assoc($getall)) {
+                                        $amount = floatval($row['total_fee']);
+                                        $payment_status = $row['payment_status'] ?? 'pending';
+                                        if ($payment_status == 'paid') {
+                                            $total_paid += $amount;
+                                        } else {
+                                            $total_pending += $amount;
+                                        }
+                                    }
+                                    ?>
+                                    <div class="stat-card stat-card-success">
+                                        <div class="stat-icon-wrapper">
+                                            <div class="stat-icon">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                            </div>
+                                        </div>
+                                        <div class="stat-content">
+                                            <div class="stat-label"><?php __e('admin_total_paid'); ?></div>
+                                            <div class="stat-value">SAR<?php echo number_format($total_paid, 2); ?></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="stat-card stat-card-pending">
+                                        <div class="stat-icon-wrapper">
+                                            <div class="stat-icon">
+                                                <i class="bi bi-clock-fill"></i>
+                                            </div>
+                                        </div>
+                                        <div class="stat-content">
+                                            <div class="stat-label"><?php __e('admin_total_pending'); ?></div>
+                                            <div class="stat-value">SAR<?php echo number_format($total_pending, 2); ?></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions for Employee -->
+                        <div class="col-12">
+                            <div class="dashboard-section">
+                                <h4 class="section-title"><?php __e('employee_quick_actions'); ?></h4>
+                                <div class="quick-actions-grid">
+                                    <a href="orders.php" class="quick-action-card">
+                                        <div class="action-icon">
                                             <i class="bi bi-truck"></i>
-                                                </div>
-                                            </div>
-                                    <div class="stat-content">
-                                        <div class="stat-label"><?php __e('admin_total_orders'); ?></div>
-                                        <div class="stat-value"><?php echo dataCount('request'); ?></div>
-                                            </div>
                                         </div>
-                                    </div>
+                                        <div class="action-text"><?php __e('admin_orders'); ?></div>
+                                    </a>
+                                    <a href="payments.php" class="quick-action-card">
+                                        <div class="action-icon">
+                                            <i class="bi bi-credit-card-fill"></i>
+                                        </div>
+                                        <div class="action-text"><?php __e('admin_payments'); ?></div>
+                                    </a>
+                                    <a href="settings.php" class="quick-action-card">
+                                        <div class="action-icon">
+                                            <i class="bi bi-gear-fill"></i>
+                                        </div>
+                                        <div class="action-text"><?php __e('admin_settings'); ?></div>
+                                    </a>
                                 </div>
                             </div>
-
-                    <!-- Order Status Stats -->
-                    <div class="col-12">
-                        <div class="dashboard-section">
-                            <h4 class="section-title"><?php __e('admin_order_status'); ?></h4>
-                            <div class="stats-grid">
-                                <div class="stat-card stat-card-pending">
-                                    <div class="stat-icon-wrapper">
-                                        <div class="stat-icon">
-                                            <i class="bi bi-clock-history"></i>
-                                                </div>
-                                            </div>
-                                    <div class="stat-content">
-                                        <div class="stat-label"><?php __e('admin_pending_orders'); ?></div>
-                                        <div class="stat-value"><?php echo dataCountWhere('request', ' tracking_status = 1 '); ?></div>
+                        </div>
+                    </section>
+                <?php else: ?>
+                    <!-- Admin Dashboard -->
+                    <section class="row">
+                        <!-- Overview Stats -->
+                        <div class="col-12">
+                            <div class="dashboard-section">
+                                <h4 class="section-title"><?php __e('admin_overview'); ?></h4>
+                                <div class="stats-grid">
+                                    <div class="stat-card stat-card-primary">
+                                        <div class="stat-icon-wrapper">
+                                            <div class="stat-icon">
+                                                <i class="bi bi-columns"></i>
                                             </div>
                                         </div>
+                                        <div class="stat-content">
+                                            <div class="stat-label"><?php __e('admin_branches'); ?></div>
+                                            <div class="stat-value"><?php echo dataCount('branch'); ?></div>
+                                        </div>
+                                    </div>
 
-                                <div class="stat-card stat-card-preparing">
-                                    <div class="stat-icon-wrapper">
-                                        <div class="stat-icon">
-                                            <i class="bi bi-box-seam"></i>
+                                    <div class="stat-card stat-card-success">
+                                        <div class="stat-icon-wrapper">
+                                            <div class="stat-icon">
+                                                <i class="bi bi-people-fill"></i>
+                                            </div>
+                                        </div>
+                                        <div class="stat-content">
+                                            <div class="stat-label"><?php __e('admin_customers'); ?></div>
+                                            <div class="stat-value"><?php echo dataCount('customer'); ?></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="stat-card stat-card-info">
+                                        <div class="stat-icon-wrapper">
+                                            <div class="stat-icon">
+                                                <i class="bi bi-person-fill"></i>
+                                            </div>
+                                        </div>
+                                        <div class="stat-content">
+                                            <div class="stat-label"><?php __e('admin_employees'); ?></div>
+                                            <div class="stat-value"><?php echo dataCount('employee'); ?></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="stat-card stat-card-warning">
+                                        <div class="stat-icon-wrapper">
+                                            <div class="stat-icon">
+                                                <i class="bi bi-truck"></i>
+                                            </div>
+                                        </div>
+                                        <div class="stat-content">
+                                            <div class="stat-label"><?php __e('admin_total_orders'); ?></div>
+                                            <div class="stat-value"><?php echo dataCount('request'); ?></div>
+                                        </div>
                                     </div>
                                 </div>
-                                    <div class="stat-content">
-                                        <div class="stat-label"><?php __e('admin_preparing'); ?></div>
-                                        <div class="stat-value"><?php echo dataCountWhere('request', ' tracking_status = 2 '); ?></div>
                             </div>
                         </div>
 
-                                <div class="stat-card stat-card-delivered">
-                                    <div class="stat-icon-wrapper">
-                                        <div class="stat-icon">
-                                            <i class="bi bi-check-circle-fill"></i>
-                                                </div>
-                                            </div>
-                                    <div class="stat-content">
-                                        <div class="stat-label"><?php __e('admin_completed_orders'); ?></div>
-                                        <div class="stat-value"><?php echo dataCountWhere('request', ' tracking_status = 3 '); ?></div>
+                        <!-- Order Status Stats -->
+                        <div class="col-12">
+                            <div class="dashboard-section">
+                                <h4 class="section-title"><?php __e('admin_order_status'); ?></h4>
+                                <div class="stats-grid">
+                                    <div class="stat-card stat-card-pending">
+                                        <div class="stat-icon-wrapper">
+                                            <div class="stat-icon">
+                                                <i class="bi bi-clock-history"></i>
                                             </div>
                                         </div>
-
-                                <div class="stat-card stat-card-canceled">
-                                    <div class="stat-icon-wrapper">
-                                        <div class="stat-icon">
-                                            <i class="bi bi-x-circle-fill"></i>
-                                    </div>
-                                </div>
-                                    <div class="stat-content">
-                                        <div class="stat-label"><?php __e('admin_canceled_orders'); ?></div>
-                                        <div class="stat-value"><?php echo dataCountWhere('request', ' tracking_status = 5 '); ?></div>
-                                            </div>
+                                        <div class="stat-content">
+                                            <div class="stat-label"><?php __e('admin_pending_orders'); ?></div>
+                                            <div class="stat-value"><?php echo dataCountWhere('request', ' tracking_status = 1 '); ?></div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
 
-                    <!-- Quick Actions -->
-                    <div class="col-12">
-                        <div class="dashboard-section">
-                            <h4 class="section-title"><?php __e('admin_quick_actions'); ?></h4>
-                            <div class="quick-actions-grid">
-                                <a href="add_request.php" class="quick-action-card">
-                                    <div class="action-icon">
-                                        <i class="bi bi-plus-circle-fill"></i>
-                                                </div>
-                                    <div class="action-text"><?php __e('admin_add_new_order'); ?></div>
-                                </a>
-                                <a href="add_courier.php" class="quick-action-card">
-                                    <div class="action-icon">
-                                        <i class="bi bi-person-plus-fill"></i>
+                                    <div class="stat-card stat-card-preparing">
+                                        <div class="stat-icon-wrapper">
+                                            <div class="stat-icon">
+                                                <i class="bi bi-box-seam"></i>
                                             </div>
-                                    <div class="action-text"><?php __e('admin_register_customer'); ?></div>
-                                </a>
-                                <a href="orders.php" class="quick-action-card">
-                                    <div class="action-icon">
-                                        <i class="bi bi-qr-code-scan"></i>
-                                            </div>
-                                    <div class="action-text"><?php __e('admin_scan_qr_code'); ?></div>
-                                </a>
-                                <a href="payments.php" class="quick-action-card">
-                                    <div class="action-icon">
-                                        <i class="bi bi-credit-card-fill"></i>
                                         </div>
-                                    <div class="action-text"><?php __e('admin_view_payments'); ?></div>
-                                </a>
+                                        <div class="stat-content">
+                                            <div class="stat-label"><?php __e('admin_preparing'); ?></div>
+                                            <div class="stat-value"><?php echo dataCountWhere('request', ' tracking_status = 2 '); ?></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="stat-card stat-card-delivered">
+                                        <div class="stat-icon-wrapper">
+                                            <div class="stat-icon">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                            </div>
+                                        </div>
+                                        <div class="stat-content">
+                                            <div class="stat-label"><?php __e('admin_completed_orders'); ?></div>
+                                            <div class="stat-value"><?php echo dataCountWhere('request', ' tracking_status = 3 '); ?></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="stat-card stat-card-canceled">
+                                        <div class="stat-icon-wrapper">
+                                            <div class="stat-icon">
+                                                <i class="bi bi-x-circle-fill"></i>
+                                            </div>
+                                        </div>
+                                        <div class="stat-content">
+                                            <div class="stat-label"><?php __e('admin_canceled_orders'); ?></div>
+                                            <div class="stat-value"><?php echo dataCountWhere('request', ' tracking_status = 5 '); ?></div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </section>
+
+                        <!-- Quick Actions -->
+                        <div class="col-12">
+                            <div class="dashboard-section">
+                                <h4 class="section-title"><?php __e('admin_quick_actions'); ?></h4>
+                                <div class="quick-actions-grid">
+                                    <a href="add_request.php" class="quick-action-card">
+                                        <div class="action-icon">
+                                            <i class="bi bi-plus-circle-fill"></i>
+                                        </div>
+                                        <div class="action-text"><?php __e('admin_add_new_order'); ?></div>
+                                    </a>
+                                    <a href="add_courier.php" class="quick-action-card">
+                                        <div class="action-icon">
+                                            <i class="bi bi-person-plus-fill"></i>
+                                        </div>
+                                        <div class="action-text"><?php __e('admin_register_customer'); ?></div>
+                                    </a>
+                                    <a href="orders.php" class="quick-action-card">
+                                        <div class="action-icon">
+                                            <i class="bi bi-qr-code-scan"></i>
+                                        </div>
+                                        <div class="action-text"><?php __e('admin_scan_qr_code'); ?></div>
+                                    </a>
+                                    <a href="payments.php" class="quick-action-card">
+                                        <div class="action-icon">
+                                            <i class="bi bi-credit-card-fill"></i>
+                                        </div>
+                                        <div class="action-text"><?php __e('admin_view_payments'); ?></div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                <?php endif; ?>
             </div>
 
             <?php include 'pages/footer.php'; ?>

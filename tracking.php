@@ -5,6 +5,7 @@ require_once __DIR__ . '/bootstrap/i18n.php';
 include 'pages/head.php';
 include 'auth.php';
 include 'conf.php';
+include 'server/inc/get.php';
 
 if (!isset($_SESSION['auth'])) {
     header("Location: login.php");
@@ -614,7 +615,7 @@ $is_rtl = is_rtl();
 
                                 <div class="info-section">
                                     <div class="info-section-title"><?php __e('tracking_total_amount'); ?></div>
-                                    <div class="info-value" style="font-size: 18px; color: var(--brand);">$<?php echo number_format($amount, 2); ?></div>
+                                    <div class="info-value" style="font-size: 18px; color: var(--brand);">SAR<?php echo number_format($amount, 2); ?></div>
                                 </div>
 
                                 <div class="info-section">
@@ -662,33 +663,111 @@ $is_rtl = is_rtl();
                             </div>
 
                             <?php
-                            // Get all statuses and determine which are active
-                            $current_status = $row['tracking_status'];
-                            $statuses = [
-                                1 => ['icon' => 'fa-shopping-cart', 'text' => __t('tracking_status_placed'), 'date' => date('d M H:i', strtotime($row['date_updated']))],
-                                2 => ['icon' => 'fa-box', 'text' => __t('tracking_status_preparing'), 'date' => ''],
-                                3 => ['icon' => 'fa-hand-holding-box', 'text' => __t('tracking_status_dropoff'), 'date' => ''],
-                                4 => ['icon' => 'fa-truck-pickup', 'text' => __t('tracking_status_picked'), 'date' => ''],
-                                5 => ['icon' => 'fa-warehouse', 'text' => __t('tracking_status_sorting_arrived'), 'date' => ''],
-                                6 => ['icon' => 'fa-truck', 'text' => __t('tracking_status_sorting_departed'), 'date' => ''],
-                                7 => ['icon' => 'fa-building', 'text' => __t('tracking_status_hub_arrived'), 'date' => ''],
-                                8 => ['icon' => 'fa-truck-fast', 'text' => __t('tracking_status_out_delivery'), 'date' => ''],
-                                9 => ['icon' => 'fa-exclamation-triangle', 'text' => __t('tracking_status_delivery_failed'), 'date' => ''],
-                                10 => ['icon' => 'fa-store', 'text' => __t('tracking_status_ready_collection'), 'date' => ''],
-                                11 => ['icon' => 'fa-circle-check', 'text' => __t('tracking_status_delivered'), 'date' => ''],
-                            ];
-                            
-                            // Map old statuses to new ones for backward compatibility
-                            $status_mapping = [
-                                1 => 1,  // Pending -> Order is placed
-                                2 => 2,  // Prepare Order -> Seller is preparing
-                                3 => 6,  // Shipped -> Departed from sorting
-                                4 => 11, // Delivered -> Parcel has been delivered
-                            ];
-                            
-                            if (isset($status_mapping[$current_status])) {
-                                $current_status = $status_mapping[$current_status];
+                            // Get status history with timestamps - only show statuses that were actually reached
+                            $status_history = [];
+                            $history_result = getStatusHistory($request_id);
+                            while ($history_row = mysqli_fetch_assoc($history_result)) {
+                                $status_history[$history_row['status']] = [
+                                    'date' => $history_row['status_date'],
+                                    'timestamp' => strtotime($history_row['status_date'])
+                                ];
                             }
+                            
+                            // Set default date for status 1 if no history exists (order creation)
+                            if (!isset($status_history[1])) {
+                                $status_history[1] = [
+                                    'date' => $row['date_updated'],
+                                    'timestamp' => strtotime($row['date_updated'])
+                                ];
+                            }
+                            
+                            // Define default statuses with their details
+                            $default_statuses_def = [
+                                1 => ['icon' => 'fa-shopping-cart', 'text' => __t('tracking_status_placed')],
+                                2 => ['icon' => 'fa-box', 'text' => __t('tracking_status_preparing')],
+                                3 => ['icon' => 'fa-hand-holding-box', 'text' => __t('tracking_status_dropoff')],
+                                4 => ['icon' => 'fa-truck-pickup', 'text' => __t('tracking_status_picked')],
+                                5 => ['icon' => 'fa-warehouse', 'text' => __t('tracking_status_sorting_arrived')],
+                                6 => ['icon' => 'fa-truck', 'text' => __t('tracking_status_sorting_departed')],
+                                7 => ['icon' => 'fa-building', 'text' => __t('tracking_status_hub_arrived')],
+                                8 => ['icon' => 'fa-truck-fast', 'text' => __t('tracking_status_out_delivery')],
+                                9 => ['icon' => 'fa-exclamation-triangle', 'text' => __t('tracking_status_delivery_failed')],
+                                10 => ['icon' => 'fa-store', 'text' => __t('tracking_status_ready_collection')],
+                                11 => ['icon' => 'fa-circle-check', 'text' => __t('tracking_status_delivered')],
+                                12 => ['icon' => 'fa-times-circle', 'text' => __t('tracking_status_canceled')],
+                            ];
+                            
+                            // Get custom statuses
+                            $custom_statuses_map = [];
+                            $custom_statuses_result = getAllCustomStatuses();
+                            $custom_start_id = 100;
+                            if ($custom_statuses_result && mysqli_num_rows($custom_statuses_result) > 0) {
+                                while ($custom_row = mysqli_fetch_assoc($custom_statuses_result)) {
+                                    $custom_id = $custom_start_id + intval($custom_row['status_id']);
+                                    $current_lang = get_current_lang();
+                                    $status_text = ($current_lang === 'ar') ? $custom_row['status_name_ar'] : $custom_row['status_name_en'];
+                                    $custom_statuses_map[$custom_id] = [
+                                        'icon' => $custom_row['status_icon'],
+                                        'text' => $status_text
+                                    ];
+                                }
+                            }
+                            
+                            // Combine default and custom statuses
+                            $all_statuses_def = array_merge($default_statuses_def, $custom_statuses_map);
+                            
+                            // Only show statuses that have been reached (have timestamps)
+                            // Sort by timestamp to show in chronological order
+                            $reached_statuses = [];
+                            foreach ($status_history as $status_id => $history_data) {
+                                if (isset($all_statuses_def[$status_id])) {
+                                    $reached_statuses[$status_id] = [
+                                        'info' => $all_statuses_def[$status_id],
+                                        'date' => $history_data['date'],
+                                        'timestamp' => $history_data['timestamp']
+                                    ];
+                                } else {
+                                    // Status not found in definitions - try to get it from database (might be a custom status)
+                                    // Check if it's a custom status (ID >= 100)
+                                    if (intval($status_id) >= 100) {
+                                        $custom_db_id = intval($status_id) - 100;
+                                        $custom_status = getCustomStatusById($custom_db_id);
+                                        if ($custom_status) {
+                                            $current_lang = get_current_lang();
+                                            $status_text = ($current_lang === 'ar') ? $custom_status['status_name_ar'] : $custom_status['status_name_en'];
+                                            $reached_statuses[$status_id] = [
+                                                'info' => [
+                                                    'icon' => $custom_status['status_icon'],
+                                                    'text' => $status_text
+                                                ],
+                                                'date' => $history_data['date'],
+                                                'timestamp' => $history_data['timestamp']
+                                            ];
+                                        } else {
+                                            // Custom status was deleted
+                                            $reached_statuses[$status_id] = [
+                                                'info' => ['icon' => 'fa-circle', 'text' => 'Status ' . $status_id],
+                                                'date' => $history_data['date'],
+                                                'timestamp' => $history_data['timestamp']
+                                            ];
+                                        }
+                                    } else {
+                                        // Default status not found - should not happen, but handle gracefully
+                                        $reached_statuses[$status_id] = [
+                                            'info' => ['icon' => 'fa-circle', 'text' => 'Status ' . $status_id],
+                                            'date' => $history_data['date'],
+                                            'timestamp' => $history_data['timestamp']
+                                        ];
+                                    }
+                                }
+                            }
+                            
+                            // Sort by timestamp (chronological order)
+                            uasort($reached_statuses, function($a, $b) {
+                                return $a['timestamp'] - $b['timestamp'];
+                            });
+                            
+                            $current_status = intval($row['tracking_status']);
                             
                             if ($row['tracking_status'] != 5 && $row['tracking_status'] != 12) {
                             ?>
@@ -696,17 +775,37 @@ $is_rtl = is_rtl();
                                     <h5 class="timeline-title"><?php __e('orders_tracking_progress'); ?></h5>
                                     <div class="vertical-timeline">
                                         <?php
-                                        foreach ($statuses as $status_id => $status_info) {
-                                            $is_active = $current_status >= $status_id;
-                                            $is_current = $current_status == $status_id;
+                                        $status_count = 0;
+                                        $total_statuses = count($reached_statuses);
+                                        
+                                        foreach ($reached_statuses as $status_id => $status_data) {
+                                            $status_count++;
+                                            $is_current = ($current_status == $status_id);
+                                            $is_last = ($status_count == $total_statuses);
+                                            
+                                            $status_date = date('d M H:i', $status_data['timestamp']);
                                             ?>
-                                            <div class="timeline-item <?php echo $is_active ? 'active' : ''; ?> <?php echo $is_current ? 'current' : ''; ?>">
+                                            <div class="timeline-item active <?php echo $is_current ? 'current' : ''; ?> <?php echo $is_last ? 'last' : ''; ?>">
                                                 <div class="timeline-dot">
-                                                    <i class="fa <?php echo $status_info['icon']; ?>"></i>
+                                                    <i class="fa <?php echo $status_data['info']['icon']; ?>"></i>
                                                 </div>
                                                 <div class="timeline-content">
-                                                    <div class="timeline-date"><?php echo $status_info['date'] ?: date('d M H:i'); ?></div>
-                                                    <div class="timeline-text"><?php echo $status_info['text']; ?></div>
+                                                    <div class="timeline-date"><?php echo $status_date; ?></div>
+                                                    <div class="timeline-text"><?php echo $status_data['info']['text']; ?></div>
+                                                </div>
+                                            </div>
+                                            <?php
+                                        }
+                                        
+                                        // If no statuses reached yet, show a message
+                                        if (empty($reached_statuses)) {
+                                            ?>
+                                            <div class="timeline-item">
+                                                <div class="timeline-dot">
+                                                    <i class="fa fa-info-circle"></i>
+                                                </div>
+                                                <div class="timeline-content">
+                                                    <div class="timeline-text"><?php __e('admin_no_status_history'); ?></div>
                                                 </div>
                                             </div>
                                             <?php
@@ -835,12 +934,12 @@ $is_rtl = is_rtl();
             font-size: 14px;
                         }
                         .tracking-code {
-                            font-size: 18px;
+            font-size: 18px;
                             font-weight: bold;
                             margin: 10px 0;
                         }
                         .order-id {
-                            font-size: 14px;
+            font-size: 14px;
                             color: #666;
                         }
                         button {
@@ -903,5 +1002,15 @@ $is_rtl = is_rtl();
         }
     </script>
 </body>
+
+</html>
+
+                console.error(`Error updating data: ${error}`);
+                alert("<?php __e('profile_update_error'); ?>");
+            }
+        }
+    </script>
+</body>
+
 
 </html>

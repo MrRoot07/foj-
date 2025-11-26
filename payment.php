@@ -213,7 +213,7 @@ $paypal_client_id = 'ATF3NgqnXDgojMU7vjwdjYMENojiNMUdKDJb2npC8J6H0QThG8yfNUJUx8Q
                 </div>
                 <div class="payment-info-row">
                     <span class="payment-info-label">Amount:</span>
-                    <span class="payment-info-value">$<?= number_format($amount, 2); ?></span>
+                    <span class="payment-info-value">SAR<?= number_format($amount, 2); ?></span>
                 </div>
             </div>
 

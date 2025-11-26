@@ -11,6 +11,7 @@ $is_rtl = is_rtl();
 
 <?php include 'pages/head.php'; ?>
 <?php include 'admin.php'; ?>
+<?php if (isEmployee()) { header("Location: index.php"); exit(); } ?>
 
 <body>
     <div id="app">
@@ -148,12 +149,12 @@ $is_rtl = is_rtl();
 
                                             <div class="employee-item-footer">
                                                 <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] == 'admin'): ?>
-                                                           <button type="button"
+                                                    <button type="button"
                                                                    onclick="deleteData(<?php echo $emp_id; ?>, 'employee', 'emp_id')"
                                                                    class="btn-delete" 
                                                                    title="<?php __e('admin_delete_employee'); ?>">
                                                                <i class="bi bi-trash"></i> <?php __e('admin_delete_employee'); ?>
-                                                           </button>
+                                                    </button>
                                                 <?php endif; ?>
                                             </div>
                                         </div>
@@ -212,7 +213,7 @@ $is_rtl = is_rtl();
                                        placeholder="<?php __e('admin_email'); ?>" 
                                        autocomplete="off" 
                                        class="form-control">
-                            </div>
+                </div>
                             </div>
 
                         <div class="form-row">
@@ -275,7 +276,7 @@ $is_rtl = is_rtl();
                                    placeholder="<?php __e('admin_address'); ?>" 
                                    autocomplete="off" 
                                    class="form-control">
-                        </div>
+                            </div>
 
                         <div class="form-row">
                             <div class="form-field">
