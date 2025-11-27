@@ -533,27 +533,3 @@ $is_rtl = is_rtl();
 </body>
 
 </html>
-
-
-    <script src="assets/js/bootstrap.bundle.min.js"></script>
-
-
-
-
-    <script src="assets/vendors/apexcharts/apexcharts.js"></script>
-
-    <script src="assets/js/pages/dashboard.js"></script>
-
-
-
-
-    <script src="assets/js/main.js"></script>
-
-
-</body>
-
-
-
-
-
-</html>

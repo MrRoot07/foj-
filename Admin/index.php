@@ -30,7 +30,7 @@ $is_rtl = is_rtl();
             <div class="page-content">
                 <?php if (isEmployee()): ?>
                     <!-- Employee Dashboard -->
-                    <section class="row">
+                <section class="row">
                         <!-- Order Status Stats for Employee -->
                         <div class="col-12">
                             <div class="dashboard-section">
@@ -52,40 +52,40 @@ $is_rtl = is_rtl();
                                         <div class="stat-icon-wrapper">
                                             <div class="stat-icon">
                                                 <i class="bi bi-box-seam"></i>
+                                                </div>
                                             </div>
-                                        </div>
                                         <div class="stat-content">
                                             <div class="stat-label"><?php __e('admin_preparing'); ?></div>
                                             <div class="stat-value"><?php echo dataCountWhere('request', ' tracking_status = 2 '); ?></div>
+                                            </div>
                                         </div>
-                                    </div>
 
                                     <div class="stat-card stat-card-delivered">
                                         <div class="stat-icon-wrapper">
                                             <div class="stat-icon">
                                                 <i class="bi bi-check-circle-fill"></i>
-                                            </div>
-                                        </div>
+                                    </div>
+                                </div>
                                         <div class="stat-content">
                                             <div class="stat-label"><?php __e('admin_completed_orders'); ?></div>
                                             <div class="stat-value"><?php echo dataCountWhere('request', ' tracking_status = 11 '); ?></div>
                                         </div>
-                                    </div>
+                            </div>
 
                                     <div class="stat-card stat-card-warning">
                                         <div class="stat-icon-wrapper">
                                             <div class="stat-icon">
                                                 <i class="bi bi-truck"></i>
+                                                </div>
                                             </div>
-                                        </div>
                                         <div class="stat-content">
                                             <div class="stat-label"><?php __e('admin_total_orders'); ?></div>
                                             <div class="stat-value"><?php echo dataCount('request'); ?></div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
                         <!-- Payment Stats for Employee -->
                         <div class="col-12">
@@ -123,16 +123,16 @@ $is_rtl = is_rtl();
                                         <div class="stat-icon-wrapper">
                                             <div class="stat-icon">
                                                 <i class="bi bi-clock-fill"></i>
+                                                </div>
                                             </div>
-                                        </div>
                                         <div class="stat-content">
                                             <div class="stat-label"><?php __e('admin_total_pending'); ?></div>
                                             <div class="stat-value">SAR<?php echo number_format($total_pending, 2); ?></div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
                         <!-- Quick Actions for Employee -->
                         <div class="col-12">
@@ -148,18 +148,18 @@ $is_rtl = is_rtl();
                                     <a href="payments.php" class="quick-action-card">
                                         <div class="action-icon">
                                             <i class="bi bi-credit-card-fill"></i>
-                                        </div>
+                                                </div>
                                         <div class="action-text"><?php __e('admin_payments'); ?></div>
                                     </a>
                                     <a href="settings.php" class="quick-action-card">
                                         <div class="action-icon">
                                             <i class="bi bi-gear-fill"></i>
-                                        </div>
+                                            </div>
                                         <div class="action-text"><?php __e('admin_settings'); ?></div>
                                     </a>
-                                </div>
-                            </div>
-                        </div>
+                                            </div>
+                                        </div>
+                                    </div>
                     </section>
                 <?php else: ?>
                     <!-- Admin Dashboard -->
@@ -173,52 +173,52 @@ $is_rtl = is_rtl();
                                         <div class="stat-icon-wrapper">
                                             <div class="stat-icon">
                                                 <i class="bi bi-columns"></i>
-                                            </div>
-                                        </div>
+                                </div>
+                            </div>
                                         <div class="stat-content">
                                             <div class="stat-label"><?php __e('admin_branches'); ?></div>
                                             <div class="stat-value"><?php echo dataCount('branch'); ?></div>
-                                        </div>
-                                    </div>
+                        </div>
+                    </div>
 
                                     <div class="stat-card stat-card-success">
                                         <div class="stat-icon-wrapper">
                                             <div class="stat-icon">
                                                 <i class="bi bi-people-fill"></i>
+                                                </div>
                                             </div>
-                                        </div>
                                         <div class="stat-content">
                                             <div class="stat-label"><?php __e('admin_customers'); ?></div>
                                             <div class="stat-value"><?php echo dataCount('customer'); ?></div>
+                                            </div>
                                         </div>
-                                    </div>
 
                                     <div class="stat-card stat-card-info">
                                         <div class="stat-icon-wrapper">
                                             <div class="stat-icon">
                                                 <i class="bi bi-person-fill"></i>
-                                            </div>
-                                        </div>
+                                    </div>
+                                </div>
                                         <div class="stat-content">
                                             <div class="stat-label"><?php __e('admin_employees'); ?></div>
                                             <div class="stat-value"><?php echo dataCount('employee'); ?></div>
                                         </div>
-                                    </div>
+                            </div>
 
                                     <div class="stat-card stat-card-warning">
                                         <div class="stat-icon-wrapper">
                                             <div class="stat-icon">
                                                 <i class="bi bi-truck"></i>
+                                                </div>
                                             </div>
-                                        </div>
                                         <div class="stat-content">
                                             <div class="stat-label"><?php __e('admin_total_orders'); ?></div>
                                             <div class="stat-value"><?php echo dataCount('request'); ?></div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
                         <!-- Order Status Stats -->
                         <div class="col-12">
@@ -234,8 +234,8 @@ $is_rtl = is_rtl();
                                         <div class="stat-content">
                                             <div class="stat-label"><?php __e('admin_pending_orders'); ?></div>
                                             <div class="stat-value"><?php echo dataCountWhere('request', ' tracking_status = 1 '); ?></div>
-                                        </div>
-                                    </div>
+                                                </div>
+                                            </div>
 
                                     <div class="stat-card stat-card-preparing">
                                         <div class="stat-icon-wrapper">
@@ -246,20 +246,20 @@ $is_rtl = is_rtl();
                                         <div class="stat-content">
                                             <div class="stat-label"><?php __e('admin_preparing'); ?></div>
                                             <div class="stat-value"><?php echo dataCountWhere('request', ' tracking_status = 2 '); ?></div>
-                                        </div>
+                                    </div>
                                     </div>
 
                                     <div class="stat-card stat-card-delivered">
                                         <div class="stat-icon-wrapper">
                                             <div class="stat-icon">
                                                 <i class="bi bi-check-circle-fill"></i>
-                                            </div>
-                                        </div>
+                                </div>
+                            </div>
                                         <div class="stat-content">
                                             <div class="stat-label"><?php __e('admin_completed_orders'); ?></div>
                                             <div class="stat-value"><?php echo dataCountWhere('request', ' tracking_status = 3 '); ?></div>
-                                        </div>
-                                    </div>
+                                                </div>
+                                            </div>
 
                                     <div class="stat-card stat-card-canceled">
                                         <div class="stat-icon-wrapper">
@@ -270,11 +270,11 @@ $is_rtl = is_rtl();
                                         <div class="stat-content">
                                             <div class="stat-label"><?php __e('admin_canceled_orders'); ?></div>
                                             <div class="stat-value"><?php echo dataCountWhere('request', ' tracking_status = 5 '); ?></div>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
                         <!-- Quick Actions -->
                         <div class="col-12">
@@ -308,7 +308,7 @@ $is_rtl = is_rtl();
                                 </div>
                             </div>
                         </div>
-                    </section>
+                </section>
                 <?php endif; ?>
             </div>
 

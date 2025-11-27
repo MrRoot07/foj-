@@ -3,7 +3,6 @@
 
 <?php include 'pages/head.php'; ?>
 <?php include 'admin.php'; ?>
-<?php if (isEmployee()) { header("Location: index.php"); exit(); } ?>
 
 <body>
     <div id="app">

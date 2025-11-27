@@ -189,6 +189,29 @@ callUpdateRequest = (data) => {
   });
 };
 
+callDeleteRequest = (data) => {
+  console.log("Delete request data:", data);
+  $.ajax({
+    method: "POST",
+    url: "../server/api.php?function_code=deleteData",
+    data: data,
+    dataType: "json",
+    success: function (response) {
+      console.log("Delete success response:", response);
+      if (response && response.success) {
+        successToastDelete();
+      } else {
+        errorMessage(response.error || "Failed to delete item.");
+      }
+    },
+    error: function (xhr, status, error) {
+      console.log("Delete error:", error);
+      console.log("Response:", xhr.responseText);
+      errorMessage("Failed to delete item. Please try again.");
+    },
+  });
+};
+
 //change password
 
 changePasswordAdmin = (form) => {

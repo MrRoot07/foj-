@@ -33,9 +33,11 @@ $is_rtl = is_rtl();
                             <div class="card-body">
                                 <div class="orders-header">
                                     <div class="header-actions">
+                                        <?php if (isAdmin()): ?>
                                         <a href="add_courier.php" class="btn-action btn-register">
                                             <i class="bi bi-person-plus"></i> <?php __e('admin_register_customer'); ?>
                                         </a>
+                                        <?php endif; ?>
                                         <a href="add_request.php" class="btn-action btn-add-order">
                                             <i class="bi bi-plus-circle"></i> <?php __e('admin_add_order'); ?>
                                         </a>

@@ -612,7 +612,7 @@ $is_rtl = is_rtl();
         <h3 style="margin-top:0;margin-bottom:10px;"><?php __e('home_contact_form_title'); ?></h3>
         <p style="margin-top:0;margin-bottom:25px;color:#6b7280;"><?php __e('home_contact_form_desc'); ?></p>
 
-        <form method="post" action="#" onsubmit="event.preventDefault(); alert('Thank you! We will contact you shortly.'); this.reset();">
+        <form method="post" action="mail/contact.php" id="contactForm">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
             <div class="field" style="display:flex;flex-direction:column;">
               <label style="font-weight:500;margin-bottom:6px;"><?php __e('home_contact_name'); ?></label>
@@ -642,12 +642,14 @@ $is_rtl = is_rtl();
                       style="padding:12px;border-radius:10px;border:1px solid #e5e7eb;resize:vertical;"></textarea>
           </div>
 
-          <button type="submit" class="btn primary"
+          <button type="submit" class="btn primary" id="submitBtn"
                   style="margin-top:20px;width:100%;padding:12px 20px;font-weight:600;
                          background:linear-gradient(135deg,#2563eb,#06b6d4);
                          color:#fff;border:none;border-radius:10px;cursor:pointer;">
-            <?php __e('home_contact_send'); ?>
+            <span id="submitText"><?php __e('home_contact_send'); ?></span>
+            <span id="submitLoading" style="display:none;">Sending...</span>
           </button>
+          <div id="formMessage" style="margin-top:15px;display:none;padding:12px;border-radius:8px;"></div>
         </form>
       </div>
 
@@ -696,6 +698,69 @@ $is_rtl = is_rtl();
       </div>
     </div>
   </footer>
+
+  <script>
+    document.getElementById('contactForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const form = this;
+      const submitBtn = document.getElementById('submitBtn');
+      const submitText = document.getElementById('submitText');
+      const submitLoading = document.getElementById('submitLoading');
+      const formMessage = document.getElementById('formMessage');
+      
+      // Disable submit button and show loading
+      submitBtn.disabled = true;
+      submitText.style.display = 'none';
+      submitLoading.style.display = 'inline';
+      formMessage.style.display = 'none';
+      
+      // Get form data
+      const formData = new FormData(form);
+      
+      // Send AJAX request
+      fetch('mail/contact.php', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Show message
+        formMessage.style.display = 'block';
+        formMessage.style.padding = '12px';
+        formMessage.style.borderRadius = '8px';
+        
+        if (data.success) {
+          formMessage.style.background = '#d1fae5';
+          formMessage.style.color = '#065f46';
+          formMessage.style.border = '1px solid #10b981';
+          formMessage.textContent = data.message;
+          form.reset();
+        } else {
+          formMessage.style.background = '#fee2e2';
+          formMessage.style.color = '#991b1b';
+          formMessage.style.border = '1px solid #ef4444';
+          formMessage.textContent = data.message;
+        }
+      })
+      .catch(error => {
+        formMessage.style.display = 'block';
+        formMessage.style.background = '#fee2e2';
+        formMessage.style.color = '#991b1b';
+        formMessage.style.border = '1px solid #ef4444';
+        formMessage.textContent = 'An error occurred. Please try again or contact us directly.';
+      })
+      .finally(() => {
+        // Re-enable submit button
+        submitBtn.disabled = false;
+        submitText.style.display = 'inline';
+        submitLoading.style.display = 'none';
+        
+        // Scroll to message
+        formMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    });
+  </script>
 
 </body>
 

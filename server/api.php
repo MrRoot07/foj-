@@ -1,4 +1,7 @@
 <?php
+// Start output buffering to prevent unwanted output
+ob_start();
+
 if (session_id() == '') {
     session_start();
 }
@@ -46,9 +49,27 @@ if (isset($_GET['function_code']) && $_GET['function_code'] == 'getCustomerTbleD
     $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
     $extensions_arr = array("jpg", "jpeg", "png", "gif", "jfif", "svg", "webp");
 } else if (isset($_GET['function_code']) && $_GET['function_code'] == 'deleteData') {
-    deleteDataTables($_POST);
+    ob_clean(); // Clear any output before JSON
+    $result = deleteDataTables($_POST);
+    header('Content-Type: application/json');
+    if ($result) {
+        echo json_encode(['success' => true, 'message' => 'Item deleted successfully']);
+    } else {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Failed to delete item']);
+    }
+    ob_end_flush();
+    exit;
 } else if (isset($_GET['function_code']) && $_GET['function_code'] == 'permanantDeleteData') {
-    permanantDeleteDataTable($_POST);
+    $result = permanantDeleteDataTable($_POST);
+    header('Content-Type: application/json');
+    if ($result) {
+        echo json_encode(['success' => true, 'message' => 'Item permanently deleted']);
+    } else {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Failed to delete item']);
+    }
+    exit;
 } else if (isset($_GET['function_code']) && $_GET['function_code'] == 'changesettings') {
     changePageSettings($_POST);
 } else if (isset($_GET['function_code']) && $_GET['function_code'] == 'SettingImage') {

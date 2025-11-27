@@ -51,7 +51,38 @@ deleteData = (id, table, id_fild) => {
         id_fild: id_fild,
       };
 
-      callDeleteRequest(data);
+      console.log("Delete data:", data);
+      
+      // Direct AJAX call (callDeleteRequest may not be loaded yet)
+      $.ajax({
+        method: "POST",
+        url: "../server/api.php?function_code=deleteData",
+        data: data,
+        dataType: "json",
+        success: function (response) {
+          console.log("Delete success response:", response);
+          if (response && response.success) {
+            successToastDelete();
+          } else {
+            errorMessage(response.error || "Failed to delete item.");
+          }
+        },
+        error: function (xhr, status, error) {
+          console.log("Delete error:", error);
+          console.log("Response:", xhr.responseText);
+          // Try to parse response even if error
+          try {
+            var response = JSON.parse(xhr.responseText);
+            if (response && response.success) {
+              successToastDelete();
+              return;
+            }
+          } catch (e) {
+            // Not JSON, continue with error message
+          }
+          errorMessage("Failed to delete item. Please try again.");
+        },
+      });
     }
   });
 };

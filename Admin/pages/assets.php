@@ -20,7 +20,7 @@
 <script src="assets/js/include/homejs.js"></script>
 <script src="assets/js/include/upload.js"></script>
 <script src="assets/js/include/add.js"></script>
-<script src="assets/js/include/delete.js"></script>
+<script src="assets/js/include/delete.js?v=<?php echo time(); ?>"></script>
 
 <script src="assets/js/include/main.js"></script>
 

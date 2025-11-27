@@ -334,16 +334,17 @@ $is_rtl = is_rtl();
 
         .currency-symbol {
             position: absolute;
-            left: 14px;
+            right: 14px;
             color: #6c757d;
             font-weight: 600;
             font-size: 16px;
             z-index: 1;
+            pointer-events: none;
         }
 
         .price-input {
             width: 100%;
-            padding: 12px 14px 12px 32px;
+            padding: 12px 32px 12px 14px;
             border: 2px solid #e9ecef;
             border-radius: 8px;
             font-size: 16px;

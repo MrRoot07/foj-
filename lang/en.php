@@ -416,5 +416,19 @@ return [
     'admin_settings_desc' => 'Manage your account settings and preferences',
     'admin_profile_settings' => 'Profile Settings',
     'admin_settings_info' => 'Settings functionality will be available soon.',
+    
+    // Settings Page
+    'settings_title' => 'Settings',
+    'settings_desc' => 'Manage your account settings and preferences',
+    'settings_account_info' => 'Account Information',
+    'settings_security' => 'Security & Privacy',
+    'settings_last_login' => 'Last Login',
+    'settings_account_status' => 'Account Status',
+    'settings_role' => 'Role',
+    'settings_member_since' => 'Member Since',
+    'settings_active' => 'Active',
+    'settings_inactive' => 'Inactive',
+    'admin_role_admin' => 'Administrator',
+    'admin_role_employee' => 'Employee',
 ];
 

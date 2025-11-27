@@ -416,5 +416,19 @@ return [
     'admin_settings_desc' => 'إدارة إعدادات حسابك وتفضيلاتك',
     'admin_profile_settings' => 'إعدادات الملف الشخصي',
     'admin_settings_info' => 'ستكون وظيفة الإعدادات متاحة قريباً.',
+    
+    // Settings Page
+    'settings_title' => 'الإعدادات',
+    'settings_desc' => 'إدارة إعدادات حسابك وتفضيلاتك',
+    'settings_account_info' => 'معلومات الحساب',
+    'settings_security' => 'الأمان والخصوصية',
+    'settings_last_login' => 'آخر تسجيل دخول',
+    'settings_account_status' => 'حالة الحساب',
+    'settings_role' => 'الدور',
+    'settings_member_since' => 'عضو منذ',
+    'settings_active' => 'نشط',
+    'settings_inactive' => 'غير نشط',
+    'admin_role_admin' => 'مدير',
+    'admin_role_employee' => 'موظف',
 ];
 
