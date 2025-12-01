@@ -147,7 +147,7 @@ return [
     'request_receiver_details' => 'Receiver Information',
     'request_receiver_name' => 'Receiver Name',
     'request_receiver_phone' => 'Receiver Phone Number',
-    'request_receiver_address' => 'Delivery Address',
+    'request_receiver_address' => 'Receiver Address',
     'request_send' => 'Submit Request',
     
     // Tracking
@@ -416,19 +416,20 @@ return [
     'admin_settings_desc' => 'Manage your account settings and preferences',
     'admin_profile_settings' => 'Profile Settings',
     'admin_settings_info' => 'Settings functionality will be available soon.',
-    
-    // Settings Page
-    'settings_title' => 'Settings',
-    'settings_desc' => 'Manage your account settings and preferences',
-    'settings_account_info' => 'Account Information',
-    'settings_security' => 'Security & Privacy',
-    'settings_last_login' => 'Last Login',
-    'settings_account_status' => 'Account Status',
-    'settings_role' => 'Role',
-    'settings_member_since' => 'Member Since',
-    'settings_active' => 'Active',
-    'settings_inactive' => 'Inactive',
+    'admin_profile_info' => 'Profile Information',
+    'admin_profile_info_desc' => 'Your account information and details',
+    'admin_role' => 'Role',
     'admin_role_admin' => 'Administrator',
     'admin_role_employee' => 'Employee',
+    'admin_change_password' => 'Change Password',
+    'admin_change_password_desc' => 'Update your account password to keep it secure',
+    'admin_current_password' => 'Current Password',
+    'admin_enter_current_password' => 'Enter your current password',
+    'admin_new_password' => 'New Password',
+    'admin_enter_new_password' => 'Enter your new password',
+    'admin_confirm_password' => 'Confirm New Password',
+    'admin_confirm_new_password' => 'Confirm your new password',
+    'admin_password_requirements' => 'Password should be at least 6 characters long',
+    'admin_save_password' => 'Save Password',
 ];
 
