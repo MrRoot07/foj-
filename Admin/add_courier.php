@@ -54,9 +54,9 @@
                                         class="form-control">
                                 </div>
                                 <div class="form-group mt-2">
-                                    <label for="inputNIC">NIC</label>
+                                    <label for="inputNIC">Passport</label>
                                     <input id="inputNIC" type="text" name="nic" data-parsley-trigger="change"
-                                        required="" placeholder="Enter NIC Number" autocomplete="off"
+                                        required="" placeholder="Enter Passport Number" autocomplete="off"
                                         class="form-control">
                                 </div>
                                 <div class="form-group mt-2">

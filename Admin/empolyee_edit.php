@@ -62,7 +62,7 @@
                                         value="<?php echo $row['phone']; ?>" class="form-control">
                                 </div>
                                 <div class="form-group mt-2">
-                                    <label for="inputNIC">NIC</label>
+                                    <label for="inputNIC">Passport</label>
                                     <input id="inputNIC" type="text" name="nic" data-parsley-trigger="change"
                                         onchange="updateData(this, '<?php echo $emp_id; ?>', 'nic', 'employee', 'emp_id');"
                                         value="<?php echo $row['nic']; ?>" required="" placeholder="Enter NIC Number"
