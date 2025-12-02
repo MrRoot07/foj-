@@ -74,7 +74,7 @@
                                 <div class="d-inline-flex border border-secondary p-2 mb-4">
                                     <h1 class="font-weight-normal text-secondary m-0 mr-3"></h1>
                                     <div class="d-flex flex-column">
-                                        <h4 class="text-info">NIC</h4>
+                                        <h4 class="text-info">Passport</h4>
                                         <p class="m-0 text-white"><?php echo $row['nic']; ?></p>
                                     </div>
                                 </div>
