@@ -474,12 +474,11 @@ $is_rtl = is_rtl();
                                         
                                         <div class="status-select-wrapper">
                                             <select
-                                                <?php if ($is_canceled): ?>disabled<?php else: ?>onchange='handleStatusChange(this, "<?php echo $request_id; ?>", <?php echo $current_status; ?>")'<?php endif; ?>
-                                                id="tracking_status <?php echo $request_id; ?>" 
+                                                <?php if ($is_canceled): ?>disabled<?php else: ?>id="status_select_<?php echo $request_id; ?>"<?php endif; ?>
                                                 class='form-control-modern status-select <?php if ($is_canceled): ?>disabled-locked<?php endif; ?>'
                                                 name="tracking_status">
-                                                <option value="<?php echo $current_status; ?>" selected disabled>
-                                                    <i class="fa <?php echo $current_status_info['icon']; ?>"></i> <?php echo htmlspecialchars($current_status_info['text']); ?> (<?php __e('admin_current_status'); ?>)
+                                                <option value="<?php echo $current_status; ?>" selected>
+                                                    <?php echo htmlspecialchars($current_status_info['text']); ?> (<?php __e('admin_current_status'); ?>)
                                                 </option>
                                                 
                                                 <?php if ($is_canceled): ?>
@@ -510,6 +509,15 @@ $is_rtl = is_rtl();
                                                 <i class="bi bi-chevron-down"></i>
                                             </div>
                                         </div>
+                                        <?php if (!$is_canceled): ?>
+                                        <button type="button" 
+                                                id="save_status_btn_<?php echo $request_id; ?>"
+                                                onclick="saveStatusChange(<?php echo $request_id; ?>, <?php echo $current_status; ?>)"
+                                                class="btn-save-status"
+                                                style="margin-top: 8px;">
+                                            <i class="bi bi-check-circle"></i> <?php __e('admin_save_status'); ?>
+                                        </button>
+                                        <?php endif; ?>
                                         
                                         <?php if (isAdmin()): ?>
                                         <!-- Custom Status Input Modal -->
@@ -576,8 +584,7 @@ $is_rtl = is_rtl();
                                     <div class="control-group">
                                         <label for="payment_status" class="control-label"><?php __e('admin_payment_status'); ?></label>
                                         <select
-                                            <?php if ($is_canceled): ?>disabled<?php else: ?>onchange='updateData(this, "<?php echo $request_id; ?>","payment_status", "request", "request_id")'<?php endif; ?>
-                                            id="payment_status <?php echo $request_id; ?>" 
+                                            <?php if ($is_canceled): ?>disabled<?php else: ?>id="payment_status_select_<?php echo $request_id; ?>" onchange='handlePaymentStatusChange(this, "<?php echo $request_id; ?>")'<?php endif; ?>
                                             class='form-control-modern <?php if ($is_canceled): ?>disabled-locked<?php endif; ?>'
                                             name="payment_status">
                                             <option value="pending" <?php if (($row['payment_status'] ?? 'pending') == "pending") echo "selected"; ?>><?php __e('admin_pending'); ?></option>
@@ -588,6 +595,12 @@ $is_rtl = is_rtl();
                                         <small style="color: #6c757d; font-size: 11px; display: block; margin-top: 4px;">
                                             <i class="bi bi-lock"></i> <?php __e('order_canceled_locked'); ?>
                                         </small>
+                                        <?php endif; ?>
+                                        <?php if (($row['payment_status'] ?? 'pending') == 'failed' && !empty($row['payment_failure_reason'] ?? '')): ?>
+                                        <div style="margin-top: 8px; padding: 10px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px;">
+                                            <strong style="font-size: 12px; color: #ef4444; display: block; margin-bottom: 4px;"><?php __e('admin_payment_failure_reason'); ?>:</strong>
+                                            <div style="font-size: 12px; color: #495057;"><?php echo nl2br(htmlspecialchars($row['payment_failure_reason'])); ?></div>
+                                        </div>
                                         <?php endif; ?>
                                     </div>
                                     <?php
@@ -780,8 +793,13 @@ $is_rtl = is_rtl();
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
     <script>
-        function handleStatusChange(element, request_id, current_status) {
-            const selectedValue = element.value;
+        function saveStatusChange(request_id, current_status) {
+            const selectElement = document.getElementById('status_select_' + request_id);
+            if (!selectElement) {
+                return;
+            }
+            
+            const selectedValue = selectElement.value;
             
             if (selectedValue === '__add_new__') {
                 // Show custom status input
@@ -791,12 +809,38 @@ $is_rtl = is_rtl();
                     document.getElementById('custom_status_name_en_' + request_id).focus();
                 }
                 // Reset select to current value
-                element.value = current_status;
+                selectElement.value = current_status;
+            } else if (selectedValue == current_status) {
+                alert('<?php echo addslashes(__t('admin_status_no_change')); ?>');
+                return;
             } else {
                 // Update status normally
-                updateStatusStepByStep(element, request_id, current_status);
+                updateStatusStepByStep(selectElement, request_id, current_status);
             }
         }
+        
+        // Handle custom status selection change
+        $(document).ready(function() {
+            $('[id^="status_select_"]').on('change', function() {
+                const selectId = $(this).attr('id');
+                const requestId = selectId.replace('status_select_', '');
+                const selectedValue = $(this).val();
+                
+                if (selectedValue === '__add_new__') {
+                    // Show custom status input
+                    const inputWrapper = document.getElementById('custom_status_input_' + requestId);
+                    if (inputWrapper) {
+                        inputWrapper.style.display = 'block';
+                        document.getElementById('custom_status_name_en_' + requestId).focus();
+                    }
+                    // Reset select to current value - we'll get it from the selected option
+                    const currentOption = $(this).find('option[selected]');
+                    if (currentOption.length) {
+                        $(this).val(currentOption.val());
+                    }
+                }
+            });
+        });
         
         function saveCustomStatus(request_id, current_status) {
             const nameEn = document.getElementById('custom_status_name_en_' + request_id).value.trim();
@@ -929,15 +973,15 @@ $is_rtl = is_rtl();
             
             // Validate on client side too
             if (new_status === current_status || isNaN(new_status)) {
-                // Reset to current status
-                element.value = current_status;
+                alert('<?php echo addslashes(__t('admin_status_no_change')); ?>');
                 return; // No change
             }
             
-            // Prevent multiple clicks
-            if (element.disabled) {
-                element.value = current_status; // Reset
-                return;
+            // Get save button
+            const saveBtn = document.getElementById('save_status_btn_' + request_id);
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> <?php echo addslashes(__t('admin_saving')); ?>...';
             }
             
             // Show loading overlay immediately to prevent visual jumps
@@ -982,6 +1026,10 @@ $is_rtl = is_rtl();
                         element.value = originalValue;
                         element.disabled = false;
                         element.style.pointerEvents = 'auto';
+                        if (saveBtn) {
+                            saveBtn.disabled = false;
+                            saveBtn.innerHTML = '<i class="bi bi-check-circle"></i> <?php echo addslashes(__t('admin_save_status')); ?>';
+                        }
                     } else {
                         // Show success message briefly before reload
                         showStatusChangeSuccess(function() {
@@ -1010,6 +1058,11 @@ $is_rtl = is_rtl();
                     element.value = originalValue;
                     element.disabled = false;
                     element.style.pointerEvents = 'auto';
+                    const saveBtn = document.getElementById('save_status_btn_' + request_id);
+                    if (saveBtn) {
+                        saveBtn.disabled = false;
+                        saveBtn.innerHTML = '<i class="bi bi-check-circle"></i> <?php echo addslashes(__t('admin_save_status')); ?>';
+                    }
                 }
             });
         }
@@ -1057,6 +1110,72 @@ $is_rtl = is_rtl();
             } else {
                 setTimeout(callback, 200);
             }
+        }
+        
+        function handlePaymentStatusChange(element, request_id) {
+            const newStatus = element.value;
+            const currentStatus = '<?php echo $row['payment_status'] ?? 'pending'; ?>';
+            
+            if (newStatus === 'failed') {
+                // Prompt for failure reason
+                const reason = prompt('<?php echo addslashes(__t('admin_payment_failure_reason_prompt')); ?>', '');
+                if (reason === null) {
+                    // User cancelled - reset to current status
+                    element.value = currentStatus;
+                    return;
+                }
+                
+                if (reason.trim() === '') {
+                    alert('<?php echo addslashes(__t('admin_payment_failure_reason_required')); ?>');
+                    element.value = currentStatus;
+                    return;
+                }
+                
+                // Update payment status with failure reason
+                updatePaymentStatus(request_id, 'failed', reason.trim());
+            } else {
+                // For pending or paid, update normally
+                updatePaymentStatus(request_id, newStatus, null);
+            }
+        }
+        
+        function updatePaymentStatus(request_id, status, failure_reason) {
+            const data = {
+                id: request_id,
+                field: 'payment_status',
+                value: status,
+                id_fild: 'request_id',
+                table: 'request',
+                payment_failure_reason: failure_reason
+            };
+
+            $.ajax({
+                method: "POST",
+                url: "../server/api.php?function_code=updatePaymentStatus",
+                data: data,
+                dataType: 'json',
+                success: function(response) {
+                    if (response && response.success) {
+                        location.reload();
+                    } else {
+                        alert(response.error || '<?php echo addslashes(__t('admin_payment_status_update_error')); ?>');
+                        // Reset select
+                        const select = document.getElementById('payment_status_select_' + request_id);
+                        if (select) {
+                            select.value = '<?php echo $row['payment_status'] ?? 'pending'; ?>';
+                        }
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Update failed:", error);
+                    alert('<?php echo addslashes(__t('admin_payment_status_update_error')); ?>');
+                    // Reset select
+                    const select = document.getElementById('payment_status_select_' + request_id);
+                    if (select) {
+                        select.value = '<?php echo $row['payment_status'] ?? 'pending'; ?>';
+                    }
+                }
+            });
         }
         
         function updateData(element, id, field, table, id_field) {
@@ -1968,6 +2087,34 @@ $is_rtl = is_rtl();
     
     .btn-delete-action:disabled {
         opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .btn-save-status {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        width: 100%;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+    
+    .btn-save-status:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    }
+    
+    .btn-save-status:disabled {
+        opacity: 0.6;
         cursor: not-allowed;
     }
 

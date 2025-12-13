@@ -25,8 +25,17 @@ if (!$request || $request['customer_id'] != $_SESSION['customer_id']) {
     exit;
 }
 
-if ($request['payment_method'] != 'paypal' || $request['payment_status'] != 'pending') {
-    header("Location: tracking.php");
+// Allow payment for:
+// 1. PayPal orders with pending or failed status
+// 2. Any order with failed status (to allow switching to PayPal)
+if ($request['payment_status'] == 'failed') {
+    // Allow payment for any failed payment, regardless of original method
+    // This allows switching from COD to PayPal if payment failed
+} elseif ($request['payment_method'] == 'paypal' && $request['payment_status'] == 'pending') {
+    // Allow payment for pending PayPal orders
+} else {
+    // Otherwise, redirect
+    header("Location: tracking.php?order_id=" . $request_id);
     exit;
 }
 

@@ -519,6 +519,7 @@ $is_rtl = is_rtl();
                         $payment_method = $row['payment_method'] ?? 'cod';
                         $payment_status = $row['payment_status'] ?? 'pending';
                         $amount = floatval($row['total_fee']);
+                        $is_canceled = (intval($row['tracking_status']) == 12);
 
                         // Get status text and class
                         $status_text = __t('tracking_status_pending');
@@ -549,8 +550,7 @@ $is_rtl = is_rtl();
                         <div class="tracking-card">
                             <div class="tracking-header">
                                 <div class="tracking-title">
-                                    <div class="tracking-id"><?php __e('tracking_id'); ?> #<?php echo $row['request_id']; ?></div>
-                                    <div class="tracking-code-text">
+                                    <div class="tracking-code-text" style="font-size: 18px; font-weight: 700; color: var(--brand); margin-bottom: 4px;">
                                         <?php __e('orders_tracking'); ?> <?php echo htmlspecialchars($row['tracking_code']); ?>
                                     </div>
                                     <div style="margin-top: 8px;">
@@ -637,6 +637,25 @@ $is_rtl = is_rtl();
                                             <span class="badge badge-warning"><?php __e('orders_payment_pending'); ?></span>
                                         <?php elseif ($payment_status == 'failed'): ?>
                                             <span class="badge badge-danger"><?php __e('orders_payment_failed'); ?></span>
+                                            <?php if (!empty($row['payment_failure_reason'] ?? '')): ?>
+                                            <div style="margin-top: 8px; padding: 10px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px;">
+                                                <strong style="font-size: 12px; color: var(--danger); display: block; margin-bottom: 4px;"><?php __e('tracking_payment_failure_reason'); ?>:</strong>
+                                                <div style="font-size: 13px; color: var(--text);"><?php echo nl2br(htmlspecialchars($row['payment_failure_reason'])); ?></div>
+                                            </div>
+                                            <?php endif; ?>
+                                            <?php if (!$is_canceled): ?>
+                                            <div style="margin-top: 12px;">
+                                                <a href="payment.php?request_id=<?php echo $request_id; ?>" class="btn btn-success" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; font-weight: 600;">
+                                                    <i class="bi bi-credit-card-2-front"></i> <?php __e('tracking_pay_again'); ?>
+                                                </a>
+                                            </div>
+                                            <?php endif; ?>
+                                        <?php elseif ($payment_status == 'pending' && $payment_method == 'paypal' && !$is_canceled): ?>
+                                            <div style="margin-top: 12px;">
+                                                <a href="payment.php?request_id=<?php echo $request_id; ?>" class="btn btn-success" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; font-weight: 600;">
+                                                    <i class="bi bi-credit-card"></i> <?php __e('tracking_pay_now'); ?>
+                                                </a>
+                                            </div>
                                         <?php endif; ?>
                                 </div>
                             </div>
@@ -821,8 +840,6 @@ $is_rtl = is_rtl();
                             if ($cancellation_result && mysqli_num_rows($cancellation_result) > 0) {
                                 $cancellation_request = mysqli_fetch_assoc($cancellation_result);
                             }
-                            
-                            $is_canceled = ($row['tracking_status'] == 12);
                             ?>
                             
                             <?php if ($is_canceled): ?>
@@ -869,7 +886,7 @@ $is_rtl = is_rtl();
                                     <?php endif; ?>
                                 <?php endif; ?>
                                 
-                                <?php if (!$is_canceled && $payment_method == 'paypal' && $payment_status == 'pending'): ?>
+                                <?php if (!$is_canceled && $payment_method == 'paypal' && ($payment_status == 'pending' || $payment_status == 'failed')): ?>
                                     <div style="display: flex; align-items: flex-end;">
                                         <a href="payment.php?request_id=<?php echo $request_id; ?>" class="btn btn-success">
                                             <i class="bi bi-credit-card"></i> <?php __e('tracking_pay_now'); ?>
@@ -1130,8 +1147,7 @@ $is_rtl = is_rtl();
                     <div class="tracking-card">
                         <div class="tracking-header">
                             <div class="tracking-title">
-                                <div class="tracking-id"><?php __e('tracking_id'); ?> #<?php echo $row['request_id']; ?></div>
-                                <div class="tracking-code-text">
+                                <div class="tracking-code-text" style="font-size: 18px; font-weight: 700; color: var(--brand);">
                                     <?php __e('orders_tracking'); ?> <?php echo htmlspecialchars($row['tracking_code']); ?>
                                 </div>
                             </div>

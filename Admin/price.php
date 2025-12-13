@@ -30,6 +30,40 @@ $is_rtl = is_rtl();
             <div class="page-content">
                 <section class="row">
                     <div class="col-12">
+                        <?php
+                        // Get price per km from settings
+                        $getSettings = getAllSettings();
+                        $settings = mysqli_fetch_assoc($getSettings);
+                        $price_per_km = isset($settings['price_per_km']) ? floatval($settings['price_per_km']) : 5.0;
+                        ?>
+                        
+                        <!-- Price Per KM Configuration -->
+                        <div class="card" style="margin-bottom: 20px;">
+                            <div class="card-body">
+                                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                                    <div style="flex: 1; min-width: 250px;">
+                                        <label for="price_per_km" style="font-weight: 600; margin-bottom: 8px; display: block; color: #495057;">
+                                            <i class="bi bi-speedometer2"></i> <?php __e('admin_price_per_km'); ?> (SAR/km)
+                                        </label>
+                                        <div class="price-input-wrapper" style="max-width: 200px;">
+                                            <span class="currency-symbol">SAR</span>
+                                            <input type="number" 
+                                                   id="price_per_km" 
+                                                   class="form-control price-input" 
+                                                   value="<?php echo number_format($price_per_km, 2); ?>"
+                                                   onchange="updatePricePerKm(this.value)"
+                                                   min="0"
+                                                   step="0.01"
+                                                   style="padding-right: 50px;">
+                                        </div>
+                                        <small style="color: #6c757d; font-size: 12px; margin-top: 4px; display: block;">
+                                            <?php __e('admin_price_per_km_desc'); ?>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="card">
                             <div class="card-body">
                                 <div class="price-header">
@@ -117,17 +151,38 @@ $is_rtl = is_rtl();
                                                 </div>
                                                 
                                                 <div class="price-amount-section">
-                                                    <label><?php __e('admin_price'); ?></label>
+                                                    <label><?php __e('admin_auto_calculated_price'); ?></label>
+                                                    <div class="price-input-wrapper">
+                                                        <span class="currency-symbol">SAR</span>
+                                                        <input type="number" 
+                                                               id="auto_price_<?php echo $price_id; ?>"
+                                                               class="form-control price-input auto-calculated-price" 
+                                                               value=""
+                                                               readonly
+                                                               style="background: #e9ecef; cursor: not-allowed;"
+                                                               min="0"
+                                                               step="0.01">
+                                                    </div>
+                                                    <small style="color: #6c757d; font-size: 11px; margin-top: 4px; display: block;">
+                                                        <i class="bi bi-calculator"></i> <?php __e('admin_auto_calculated'); ?>
+                                                    </small>
+                                                </div>
+                                                
+                                                <div class="price-amount-section" style="margin-top: 12px;">
+                                                    <label><?php __e('admin_manual_price'); ?></label>
                                                     <div class="price-input-wrapper">
                                                         <span class="currency-symbol">SAR</span>
                                                         <input type="number" 
                                                                id="price_<?php echo $price_id; ?>"
-                                                               class="form-control price-input" 
-                                                    value="<?php echo $row['price']; ?>"
+                                                               class="form-control price-input manual-price" 
+                                                               value="<?php echo $row['price']; ?>"
                                                                onchange="updateData(this, '<?php echo $price_id; ?>', 'price', 'price_table', 'price_id')"
                                                                min="0"
                                                                step="0.01">
                                                     </div>
+                                                    <small style="color: #6c757d; font-size: 11px; margin-top: 4px; display: block;">
+                                                        <i class="bi bi-pencil"></i> <?php __e('admin_manual_override'); ?>
+                                                    </small>
                                                 </div>
                                             </div>
 
@@ -191,11 +246,29 @@ $is_rtl = is_rtl();
                             </div>
 
                         <div class="form-field">
-                                <label for="price" class="form-label">Price</label>
+                                <label for="auto_price" class="form-label"><?php __e('admin_auto_calculated_price'); ?></label>
                             <div class="price-input-wrapper">
                                 <span class="currency-symbol">SAR</span>
                                 <input type="number" 
-                                       class="form-control price-input" 
+                                       class="form-control price-input auto-calculated-price" 
+                                       id="auto_price" 
+                                       placeholder="0.00"
+                                       readonly
+                                       style="background: #e9ecef; cursor: not-allowed;"
+                                       min="0"
+                                       step="0.01">
+                            </div>
+                            <small style="color: #6c757d; font-size: 11px; margin-top: 4px; display: block;">
+                                <i class="bi bi-calculator"></i> <?php __e('admin_auto_calculated'); ?>
+                            </small>
+                            </div>
+                        
+                        <div class="form-field">
+                                <label for="price" class="form-label"><?php __e('admin_manual_price'); ?> <span style="color: #ef4444;">*</span></label>
+                            <div class="price-input-wrapper">
+                                <span class="currency-symbol">SAR</span>
+                                <input type="number" 
+                                       class="form-control price-input manual-price" 
                                        name="price" 
                                        id="price" 
                                        placeholder="0.00"
@@ -203,6 +276,9 @@ $is_rtl = is_rtl();
                                        step="0.01"
                                        required>
                             </div>
+                            <small style="color: #6c757d; font-size: 11px; margin-top: 4px; display: block;">
+                                <i class="bi bi-pencil"></i> <?php __e('admin_manual_override'); ?>
+                            </small>
                             </div>
                     </div>
                     <div class="modal-footer">
@@ -713,40 +789,203 @@ $is_rtl = is_rtl();
             }
         });
 
+        // City name mapping - maps area names to standardized city names
+        const cityNameMap = {
+            'riyadh': 'Riyadh',
+            'al ahsa': 'Al Ahsa',
+            'ahsa': 'Al Ahsa',
+            'mecca': 'Mecca',
+            'makkah': 'Mecca',
+            'madinah': 'Madinah',
+            'medina': 'Madinah',
+            'jeddah': 'Jeddah',
+            'dammam': 'Dammam'
+        };
+
+        // Distance matrix in kilometers (hard-coded)
+        const distanceMatrix = {
+            'Riyadh': {
+                'Riyadh': 0,
+                'Al Ahsa': 330,
+                'Mecca': 870,
+                'Madinah': 850,
+                'Jeddah': 950,
+                'Dammam': 400
+            },
+            'Al Ahsa': {
+                'Riyadh': 330,
+                'Al Ahsa': 0,
+                'Mecca': 1200,
+                'Madinah': 1150,
+                'Jeddah': 1300,
+                'Dammam': 150
+            },
+            'Mecca': {
+                'Riyadh': 870,
+                'Al Ahsa': 1200,
+                'Mecca': 0,
+                'Madinah': 450,
+                'Jeddah': 80,
+                'Dammam': 1300
+            },
+            'Madinah': {
+                'Riyadh': 850,
+                'Al Ahsa': 1150,
+                'Mecca': 450,
+                'Madinah': 0,
+                'Jeddah': 420,
+                'Dammam': 1250
+            },
+            'Jeddah': {
+                'Riyadh': 950,
+                'Al Ahsa': 1300,
+                'Mecca': 80,
+                'Madinah': 420,
+                'Jeddah': 0,
+                'Dammam': 1350
+            },
+            'Dammam': {
+                'Riyadh': 400,
+                'Al Ahsa': 150,
+                'Mecca': 1300,
+                'Madinah': 1250,
+                'Jeddah': 1350,
+                'Dammam': 0
+            }
+        };
+
+        // Function to normalize city name
+        function normalizeCityName(areaName) {
+            if (!areaName) return null;
+            const normalized = areaName.trim().toLowerCase();
+            
+            // Direct match
+            if (cityNameMap[normalized]) {
+                return cityNameMap[normalized];
+            }
+            
+            // Partial match
+            for (const key in cityNameMap) {
+                if (normalized.includes(key) || key.includes(normalized)) {
+                    return cityNameMap[key];
+                }
+            }
+            
+            // Check if area name contains city name
+            for (const key in cityNameMap) {
+                if (normalized.includes(key)) {
+                    return cityNameMap[key];
+                }
+            }
+            
+            return null;
+        }
+
+        // Function to get city name from area select element
+        function getCityNameFromSelect(selectElement) {
+            if (!selectElement || !selectElement.value) return null;
+            
+            const selectedOption = selectElement.options[selectElement.selectedIndex];
+            if (!selectedOption) return null;
+            
+            const areaName = selectedOption.text.trim();
+            return normalizeCityName(areaName);
+        }
+
+        // Get price per km from settings
+        function getPricePerKm() {
+            const pricePerKmInput = document.getElementById('price_per_km');
+            if (pricePerKmInput && pricePerKmInput.value) {
+                return parseFloat(pricePerKmInput.value) || 5.0;
+            }
+            return 5.0; // Default fallback
+        }
+
+        // Update price per km in settings
+        function updatePricePerKm(value) {
+            const pricePerKm = parseFloat(value) || 5.0;
+            
+            if (pricePerKm < 0) {
+                alert('<?php echo addslashes(__t('admin_price_per_km_invalid')); ?>');
+                document.getElementById('price_per_km').value = '5.00';
+                return;
+            }
+            
+            // Update via AJAX
+            $.ajax({
+                method: "POST",
+                url: "../server/api.php?function_code=updateSettings",
+                data: {
+                    field: 'price_per_km',
+                    value: pricePerKm
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response && response.success) {
+                        // Recalculate all prices
+                        $('.price-item').each(function() {
+                            const priceId = $(this).find('.editable-select').first().attr('id');
+                            if (priceId) {
+                                const id = priceId.replace('start_area_', '').replace('end_area_', '');
+                                if (id && !isNaN(id)) {
+                                    calculatePrice(parseInt(id));
+                                }
+                            }
+                        });
+                    } else {
+                        alert(response.error || '<?php echo addslashes(__t('admin_price_per_km_update_error')); ?>');
+                    }
+                },
+                error: function() {
+                    alert('<?php echo addslashes(__t('admin_price_per_km_update_error')); ?>');
+                }
+            });
+        }
+
         // Auto-calculate price function
         function calculatePrice(priceId) {
             const startArea = document.getElementById('start_area_' + priceId);
             const endArea = document.getElementById('end_area_' + priceId);
-            const priceInput = document.getElementById('price_' + priceId);
+            const autoPriceInput = document.getElementById('auto_price_' + priceId);
+            const manualPriceInput = document.getElementById('price_' + priceId);
             
-            if (startArea && endArea && priceInput && startArea.value && endArea.value) {
-                const startAreaId = parseInt(startArea.value);
-                const endAreaId = parseInt(endArea.value);
+            if (!startArea || !endArea || !autoPriceInput || !startArea.value || !endArea.value) {
+                return;
+            }
+            
+            const startCity = getCityNameFromSelect(startArea);
+            const endCity = getCityNameFromSelect(endArea);
+            
+            if (!startCity || !endCity) {
+                // If cities are not in our matrix, clear auto-calculated price
+                autoPriceInput.value = '';
+                return;
+            }
+            
+            // Get distance from matrix
+            const distance = distanceMatrix[startCity] && distanceMatrix[startCity][endCity];
+            
+            if (distance !== undefined && distance !== null) {
+                // Get price per km from settings
+                const pricePerKm = getPricePerKm();
                 
-                // Calculate price: base price + distance factor
-                // Base price: 50 SAR
-                let calculatedPrice = 50;
-                
-                if (startAreaId !== endAreaId) {
-                    // Add distance factor based on area difference
-                    const areaDiff = Math.abs(startAreaId - endAreaId);
-                    // Add 3 SAR per area difference (represents distance)
-                    calculatedPrice += (areaDiff * 3);
-                    
-                    // Add route factor: (start + end area IDs) * 0.5
-                    calculatedPrice += ((startAreaId + endAreaId) * 0.5);
-                } else {
-                    // Same area: base price only
-                    calculatedPrice = 30;
-                }
+                // Calculate price: distance * price_per_km
+                const calculatedPrice = distance * pricePerKm;
                 
                 // Round to 2 decimal places
-                calculatedPrice = Math.round(calculatedPrice * 100) / 100;
+                const roundedPrice = Math.round(calculatedPrice * 100) / 100;
                 
-                priceInput.value = calculatedPrice;
+                // Update auto-calculated price (read-only)
+                autoPriceInput.value = roundedPrice;
                 
-                // Trigger update to save the calculated price
-                updateData(priceInput, priceId, 'price', 'price_table', 'price_id');
+                // If manual price is empty, also set it to calculated price
+                if (!manualPriceInput.value || manualPriceInput.value == '0' || manualPriceInput.value == '') {
+                    manualPriceInput.value = roundedPrice;
+                    // Trigger update to save the calculated price
+                    updateData(manualPriceInput, priceId, 'price', 'price_table', 'price_id');
+                }
+            } else {
+                autoPriceInput.value = '';
             }
         }
 
@@ -754,35 +993,62 @@ $is_rtl = is_rtl();
         function calculatePriceModal() {
             const startArea = document.getElementById('start_area');
             const endArea = document.getElementById('end_area');
-            const priceInput = document.getElementById('price');
+            const autoPriceInput = document.getElementById('auto_price');
+            const manualPriceInput = document.getElementById('price');
             
-            if (startArea && endArea && priceInput && startArea.value && endArea.value) {
-                const startAreaId = parseInt(startArea.value);
-                const endAreaId = parseInt(endArea.value);
+            if (!startArea || !endArea || !autoPriceInput || !startArea.value || !endArea.value) {
+                return;
+            }
+            
+            const startCity = getCityNameFromSelect(startArea);
+            const endCity = getCityNameFromSelect(endArea);
+            
+            if (!startCity || !endCity) {
+                // If cities are not in our matrix, clear auto-calculated price
+                autoPriceInput.value = '';
+                return;
+            }
+            
+            // Get distance from matrix
+            const distance = distanceMatrix[startCity] && distanceMatrix[startCity][endCity];
+            
+            if (distance !== undefined && distance !== null) {
+                // Get price per km from settings
+                const pricePerKm = getPricePerKm();
                 
-                // Calculate price: base price + distance factor
-                // Base price: 50 SAR
-                let calculatedPrice = 50;
-                
-                if (startAreaId !== endAreaId) {
-                    // Add distance factor based on area difference
-                    const areaDiff = Math.abs(startAreaId - endAreaId);
-                    // Add 3 SAR per area difference (represents distance)
-                    calculatedPrice += (areaDiff * 3);
-                    
-                    // Add route factor: (start + end area IDs) * 0.5
-                    calculatedPrice += ((startAreaId + endAreaId) * 0.5);
-                } else {
-                    // Same area: base price only
-                    calculatedPrice = 30;
-                }
+                // Calculate price: distance * price_per_km
+                const calculatedPrice = distance * pricePerKm;
                 
                 // Round to 2 decimal places
-                calculatedPrice = Math.round(calculatedPrice * 100) / 100;
+                const roundedPrice = Math.round(calculatedPrice * 100) / 100;
                 
-                priceInput.value = calculatedPrice;
+                // Update auto-calculated price (read-only)
+                autoPriceInput.value = roundedPrice;
+                
+                // Auto-fill manual price with calculated value if empty
+                if (!manualPriceInput.value || manualPriceInput.value == '0' || manualPriceInput.value == '') {
+                    manualPriceInput.value = roundedPrice;
+                }
+            } else {
+                autoPriceInput.value = '';
             }
         }
+        
+        // Calculate prices on page load for existing items
+        $(document).ready(function() {
+            // Calculate prices for existing items after a short delay to ensure DOM is ready
+            setTimeout(function() {
+                $('.price-item').each(function() {
+                    const priceId = $(this).find('.editable-select').first().attr('id');
+                    if (priceId) {
+                        const id = priceId.replace('start_area_', '').replace('end_area_', '');
+                        if (id && !isNaN(id)) {
+                            calculatePrice(parseInt(id));
+                        }
+                    }
+                });
+            }, 500);
+        });
     </script>
 </body>
 

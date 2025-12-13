@@ -319,8 +319,7 @@ $is_rtl = is_rtl();
                     <div class="order-card">
                         <div class="order-header">
                             <div>
-                                <div class="order-id"><?php __e('orders_order_id'); ?><?php echo $row['request_id']; ?></div>
-                                <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
+                                <div class="order-id" style="font-size: 18px; font-weight: 700; color: var(--brand);">
                                     <?php __e('orders_tracking'); ?> <?php echo htmlspecialchars($row['tracking_code']); ?>
                                 </div>
                             </div>
@@ -403,7 +402,7 @@ $is_rtl = is_rtl();
                                     <i class="bi bi-star"></i> <?php __e('rating_view'); ?>
                                 </a>
                             <?php endif; ?>
-                            <?php if ($payment_method == 'paypal' && $payment_status == 'pending'): ?>
+                            <?php if ($payment_method == 'paypal' && ($payment_status == 'pending' || $payment_status == 'failed')): ?>
                                 <a href="payment.php?request_id=<?php echo $request_id; ?>" class="btn btn-success">
                                     <i class="bi bi-credit-card"></i> <?php __e('orders_pay_now'); ?>
                                 </a>

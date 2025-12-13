@@ -448,9 +448,9 @@ $is_rtl = is_rtl();
                                                     // Redirect to payment page for PayPal
                                                     window.location.href = "payment.php?request_id=" + response.request_id;
                                                 } else {
-                                                    // COD - redirect to tracking
+                                                    // COD - redirect to orders page
                                                     alert("Request submitted successfully!");
-                                                    window.location.href = "tracking.php";
+                                                    window.location.href = "orders.php";
                                                 }
                                             } else {
                                                 alert("Failed to submit request");

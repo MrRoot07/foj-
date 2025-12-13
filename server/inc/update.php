@@ -230,7 +230,8 @@ function updatePaymentStatus($request_id, $payment_status, $paypal_transaction_i
     $paypal_transaction_id = mysqli_real_escape_string($con, $paypal_transaction_id);
     
     if ($paypal_transaction_id) {
-        $sql = "UPDATE request SET payment_status = '$payment_status', paypal_transaction_id = '$paypal_transaction_id', payment_date = now() WHERE request_id = '$request_id'";
+        // If there's a PayPal transaction ID, update payment method to PayPal and clear failure reason
+        $sql = "UPDATE request SET payment_status = '$payment_status', payment_method = 'paypal', paypal_transaction_id = '$paypal_transaction_id', payment_date = now(), payment_failure_reason = NULL WHERE request_id = '$request_id'";
     } else {
         $sql = "UPDATE request SET payment_status = '$payment_status', payment_date = now() WHERE request_id = '$request_id'";
     }
