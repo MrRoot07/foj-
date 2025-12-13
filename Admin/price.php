@@ -38,6 +38,22 @@ $is_rtl = is_rtl();
                                     </button>
                                 </div>
 
+                                <div class="search-container">
+                                    <div class="search-wrapper">
+                                        <i class="bi bi-search search-icon"></i>
+                                        <input type="text" 
+                                               id="priceSearch" 
+                                               class="search-input" 
+                                               placeholder="<?php __e('admin_search_prices'); ?>">
+                                        <button type="button" class="search-clear" id="clearPriceSearch" style="display: none;">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </div>
+                                    <div class="search-results-info" id="priceSearchResultsInfo" style="display: none;">
+                                        <span id="priceResultsCount">0</span> <?php __e('admin_prices_found'); ?>
+                                    </div>
+                                </div>
+
                                 <div class="price-list">
                                     <?php
                                     $getall = getAllPrice();
@@ -53,9 +69,11 @@ $is_rtl = is_rtl();
                                         $endAreaRow = mysqli_fetch_assoc($getEndArea);
                                         $endAreaName = $endAreaRow['area_name'];
                                         ?>
-                                        <div class="price-item">
+                                        <div class="price-item"
+                                             data-start-area="<?php echo strtolower(htmlspecialchars($startAreaName)); ?>"
+                                             data-end-area="<?php echo strtolower(htmlspecialchars($endAreaName)); ?>"
+                                             data-price="<?php echo htmlspecialchars($row['price']); ?>">
                                             <div class="price-item-header">
-                                                <div class="price-id-badge">ID: <?php echo $price_id; ?></div>
                                                 <div class="price-date"><?php echo date('M d, Y', strtotime($row['date_updated'])); ?></div>
                                             </div>
                                             
@@ -65,7 +83,7 @@ $is_rtl = is_rtl();
                                                         <label><?php __e('admin_start_area'); ?></label>
                                                         <select id="start_area_<?php echo $price_id; ?>"
                                                                 class="form-control editable-select" 
-                                                                onchange="updateData(this, '<?php echo $price_id; ?>', 'start_area', 'price_table', 'price_id')">
+                                                                onchange="calculatePrice(<?php echo $price_id; ?>); updateData(this, '<?php echo $price_id; ?>', 'start_area', 'price_table', 'price_id')">
                                                     <?php
                                                     $getallCat = getAllArea();
                                                     while ($row2 = mysqli_fetch_assoc($getallCat)) { ?>
@@ -85,7 +103,7 @@ $is_rtl = is_rtl();
                                                         <label><?php __e('admin_end_area'); ?></label>
                                                         <select id="end_area_<?php echo $price_id; ?>"
                                                                 class="form-control editable-select" 
-                                                                onchange="updateData(this, '<?php echo $price_id; ?>', 'end_area', 'price_table', 'price_id')">
+                                                                onchange="calculatePrice(<?php echo $price_id; ?>); updateData(this, '<?php echo $price_id; ?>', 'end_area', 'price_table', 'price_id')">
                                                     <?php
                                                     $getallCat = getAllArea();
                                                     while ($row2 = mysqli_fetch_assoc($getallCat)) { ?>
@@ -146,7 +164,7 @@ $is_rtl = is_rtl();
                     <div class="modal-body">
                         <div class="form-field">
                                 <label for="start_area" class="form-label">Start Area</label>
-                            <select id="start_area" class="form-control" name="start_area" required>
+                            <select id="start_area" class="form-control" name="start_area" required onchange="calculatePriceModal()">
                                 <option value="">Select Start Area</option>
                                 <?php 
                                 $getall = getAllArea();
@@ -160,7 +178,7 @@ $is_rtl = is_rtl();
                         
                         <div class="form-field">
                                 <label for="end_area" class="form-label">End Area</label>
-                            <select id="end_area" class="form-control" name="end_area" required>
+                            <select id="end_area" class="form-control" name="end_area" required onchange="calculatePriceModal()">
                                 <option value="">Select End Area</option>
                                 <?php 
                                 $getall = getAllArea();
@@ -183,7 +201,7 @@ $is_rtl = is_rtl();
                                        placeholder="0.00"
                                        min="0"
                                        step="0.01"
-                                    required>
+                                       required>
                             </div>
                             </div>
                     </div>
@@ -234,29 +252,119 @@ $is_rtl = is_rtl();
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
 
-        .price-list {
+        .search-container {
+            margin-bottom: 20px;
+        }
+
+        .search-wrapper {
+            position: relative;
             display: flex;
-            flex-direction: column;
-            gap: 20px;
+            align-items: center;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            color: #6c757d;
+            font-size: 18px;
+            z-index: 1;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 45px 12px 45px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            background: #f8f9fa;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-clear {
+            position: absolute;
+            right: 12px;
+            background: transparent;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-clear:hover {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .search-results-info {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .price-item.hidden {
+            display: none;
+        }
+
+        .price-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 16px;
+            max-height: calc(100vh - 300px);
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .price-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .price-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .price-list::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        .price-list::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
         }
 
         .price-item {
             background: #ffffff;
             border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-            transition: all 0.3s ease;
+            border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .price-item:hover {
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
             border-color: #d0d0d0;
+            transform: translateY(-1px);
         }
 
         .price-item-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 14px 20px;
+            padding: 10px 14px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -265,28 +373,29 @@ $is_rtl = is_rtl();
         .price-id-badge {
             background: rgba(255, 255, 255, 0.2);
             color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 11px;
             font-weight: 600;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         .price-date {
             color: white;
-            font-size: 12px;
+            font-size: 10px;
             opacity: 0.9;
         }
 
         .price-item-body {
-            padding: 24px;
+            padding: 12px 14px;
+            flex: 1;
         }
 
         .price-route {
             display: flex;
             align-items: flex-end;
-            gap: 20px;
-            margin-bottom: 24px;
+            gap: 12px;
+            margin-bottom: 14px;
         }
 
         .route-section {
@@ -296,20 +405,20 @@ $is_rtl = is_rtl();
         }
 
         .route-section label {
-            font-size: 12px;
+            font-size: 10px;
             font-weight: 600;
             color: #495057;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         .route-arrow {
             display: flex;
             align-items: center;
-            padding-bottom: 28px;
+            padding-bottom: 20px;
             color: #667eea;
-            font-size: 24px;
+            font-size: 18px;
         }
 
         .price-amount-section {
@@ -318,12 +427,12 @@ $is_rtl = is_rtl();
         }
 
         .price-amount-section label {
-            font-size: 12px;
+            font-size: 10px;
             font-weight: 600;
             color: #495057;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         .price-input-wrapper {
@@ -344,10 +453,10 @@ $is_rtl = is_rtl();
 
         .price-input {
             width: 100%;
-            padding: 12px 32px 12px 14px;
+            padding: 8px 28px 8px 10px;
             border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 16px;
+            border-radius: 6px;
+            font-size: 14px;
             font-weight: 600;
             transition: all 0.2s ease;
             background: #f8f9fa;
@@ -362,10 +471,10 @@ $is_rtl = is_rtl();
 
         .editable-select {
             width: 100%;
-            padding: 12px 14px;
+            padding: 8px 10px;
             border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 14px;
+            border-radius: 6px;
+            font-size: 12px;
             transition: all 0.2s ease;
             background: #f8f9fa;
             cursor: pointer;
@@ -384,7 +493,7 @@ $is_rtl = is_rtl();
         }
 
         .price-item-footer {
-            padding: 16px 20px;
+            padding: 10px 14px;
             background: #f8f9fa;
             border-top: 1px solid #e9ecef;
             display: flex;
@@ -395,15 +504,15 @@ $is_rtl = is_rtl();
             background: #ef4444;
             color: white;
             border: none;
-            padding: 8px 16px;
+            padding: 6px 12px;
             border-radius: 6px;
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
         }
 
         .btn-delete:hover {
@@ -509,10 +618,21 @@ $is_rtl = is_rtl();
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
 
+        @media (max-width: 1200px) {
+            .price-list {
+                grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            }
+        }
+
         @media (max-width: 768px) {
+            .price-list {
+                grid-template-columns: 1fr;
+                max-height: none;
+            }
+
             .price-route {
                 flex-direction: column;
-                gap: 16px;
+                gap: 12px;
             }
 
             .route-arrow {
@@ -531,6 +651,139 @@ $is_rtl = is_rtl();
     <script src="assets/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/main.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const searchInput = $('#priceSearch');
+            const clearButton = $('#clearPriceSearch');
+            const resultsInfo = $('#priceSearchResultsInfo');
+            const resultsCount = $('#priceResultsCount');
+            const priceItems = $('.price-item');
+
+            // Show/hide clear button
+            searchInput.on('input', function() {
+                if ($(this).val().length > 0) {
+                    clearButton.show();
+                } else {
+                    clearButton.hide();
+                    resultsInfo.hide();
+                }
+            });
+
+            // Clear search
+            clearButton.on('click', function() {
+                searchInput.val('');
+                $(this).hide();
+                resultsInfo.hide();
+                filterPrices('');
+            });
+
+            // Search functionality
+            searchInput.on('input', function() {
+                const searchTerm = $(this).val().toLowerCase().trim();
+                filterPrices(searchTerm);
+            });
+
+            function filterPrices(searchTerm) {
+                let visibleCount = 0;
+
+                if (searchTerm === '') {
+                    priceItems.removeClass('hidden');
+                    resultsInfo.hide();
+                    return;
+                }
+
+                priceItems.each(function() {
+                    const $item = $(this);
+                    const startArea = $item.data('start-area') || '';
+                    const endArea = $item.data('end-area') || '';
+                    const price = $item.data('price') || '';
+
+                    const searchableText = (startArea + ' ' + endArea + ' ' + price).toLowerCase();
+
+                    if (searchableText.includes(searchTerm)) {
+                        $item.removeClass('hidden');
+                        visibleCount++;
+                    } else {
+                        $item.addClass('hidden');
+                    }
+                });
+
+                resultsCount.text(visibleCount);
+                resultsInfo.show();
+            }
+        });
+
+        // Auto-calculate price function
+        function calculatePrice(priceId) {
+            const startArea = document.getElementById('start_area_' + priceId);
+            const endArea = document.getElementById('end_area_' + priceId);
+            const priceInput = document.getElementById('price_' + priceId);
+            
+            if (startArea && endArea && priceInput && startArea.value && endArea.value) {
+                const startAreaId = parseInt(startArea.value);
+                const endAreaId = parseInt(endArea.value);
+                
+                // Calculate price: base price + distance factor
+                // Base price: 50 SAR
+                let calculatedPrice = 50;
+                
+                if (startAreaId !== endAreaId) {
+                    // Add distance factor based on area difference
+                    const areaDiff = Math.abs(startAreaId - endAreaId);
+                    // Add 3 SAR per area difference (represents distance)
+                    calculatedPrice += (areaDiff * 3);
+                    
+                    // Add route factor: (start + end area IDs) * 0.5
+                    calculatedPrice += ((startAreaId + endAreaId) * 0.5);
+                } else {
+                    // Same area: base price only
+                    calculatedPrice = 30;
+                }
+                
+                // Round to 2 decimal places
+                calculatedPrice = Math.round(calculatedPrice * 100) / 100;
+                
+                priceInput.value = calculatedPrice;
+                
+                // Trigger update to save the calculated price
+                updateData(priceInput, priceId, 'price', 'price_table', 'price_id');
+            }
+        }
+
+        // Auto-calculate price for modal form
+        function calculatePriceModal() {
+            const startArea = document.getElementById('start_area');
+            const endArea = document.getElementById('end_area');
+            const priceInput = document.getElementById('price');
+            
+            if (startArea && endArea && priceInput && startArea.value && endArea.value) {
+                const startAreaId = parseInt(startArea.value);
+                const endAreaId = parseInt(endArea.value);
+                
+                // Calculate price: base price + distance factor
+                // Base price: 50 SAR
+                let calculatedPrice = 50;
+                
+                if (startAreaId !== endAreaId) {
+                    // Add distance factor based on area difference
+                    const areaDiff = Math.abs(startAreaId - endAreaId);
+                    // Add 3 SAR per area difference (represents distance)
+                    calculatedPrice += (areaDiff * 3);
+                    
+                    // Add route factor: (start + end area IDs) * 0.5
+                    calculatedPrice += ((startAreaId + endAreaId) * 0.5);
+                } else {
+                    // Same area: base price only
+                    calculatedPrice = 30;
+                }
+                
+                // Round to 2 decimal places
+                calculatedPrice = Math.round(calculatedPrice * 100) / 100;
+                
+                priceInput.value = calculatedPrice;
+            }
+        }
+    </script>
 </body>
 
 </html>

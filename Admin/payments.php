@@ -90,6 +90,21 @@ $is_rtl = is_rtl();
                     <div class="col-12">
                         <div class="card">
                             <div class="card-body">
+                                <div class="search-container">
+                                    <div class="search-wrapper">
+                                        <i class="bi bi-search search-icon"></i>
+                                        <input type="text" 
+                                               id="paymentSearch" 
+                                               class="search-input" 
+                                               placeholder="<?php __e('admin_search_payments'); ?>">
+                                        <button type="button" class="search-clear" id="clearPaymentSearch" style="display: none;">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </div>
+                                    <div class="search-results-info" id="paymentSearchResultsInfo" style="display: none;">
+                                        <span id="paymentResultsCount">0</span> <?php __e('admin_payments_found'); ?>
+                                    </div>
+                                </div>
                                 <div class="payments-list">
                                     <?php
                                     $has_payments = false;
@@ -107,10 +122,12 @@ $is_rtl = is_rtl();
                                             $status_class = 'status-failed';
                                         }
                                         ?>
-                                        <div class="payment-item">
+                                        <div class="payment-item"
+                                             data-tracking="<?php echo strtolower(htmlspecialchars($row['tracking_code'])); ?>"
+                                             data-customer="<?php echo strtolower(htmlspecialchars($row['name'] ?? '')); ?>"
+                                             data-status="<?php echo strtolower($payment_status); ?>">
                                             <div class="payment-item-header">
                                                 <div class="payment-header-left">
-                                                    <div class="payment-id-badge"><?php __e('admin_order'); ?> #<?php echo $row['request_id']; ?></div>
                                                     <div class="tracking-code"><?php __e('admin_tracking'); ?>: <?php echo htmlspecialchars($row['tracking_code']); ?></div>
                                                 </div>
                                                 <span class="payment-status-badge <?php echo $status_class; ?>">
@@ -287,68 +304,157 @@ $is_rtl = is_rtl();
             color: #ef4444;
         }
 
-        .payments-list {
+        .search-container {
+            margin-bottom: 20px;
+        }
+
+        .search-wrapper {
+            position: relative;
             display: flex;
-            flex-direction: column;
-            gap: 20px;
+            align-items: center;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            color: #6c757d;
+            font-size: 18px;
+            z-index: 1;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 45px 12px 45px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            background: #f8f9fa;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-clear {
+            position: absolute;
+            right: 12px;
+            background: transparent;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-clear:hover {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .search-results-info {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .payment-item.hidden {
+            display: none;
+        }
+
+        .payments-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 16px;
+            max-height: calc(100vh - 400px);
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .payments-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .payments-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .payments-list::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        .payments-list::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
         }
 
         .payment-item {
             background: #ffffff;
             border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-            transition: all 0.3s ease;
+            border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .payment-item:hover {
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
             border-color: #d0d0d0;
-            transform: translateY(-2px);
+            transform: translateY(-1px);
         }
 
         .payment-item-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 16px 20px;
+            padding: 10px 14px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 8px;
         }
 
         .payment-header-left {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 4px;
         }
 
         .payment-id-badge {
             background: rgba(255, 255, 255, 0.2);
             color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 14px;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 12px;
             font-weight: 700;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
             display: inline-block;
             width: fit-content;
         }
 
         .tracking-code {
             color: white;
-            font-size: 13px;
+            font-size: 11px;
             opacity: 0.95;
         }
 
         .payment-status-badge {
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 10px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         .status-paid {
@@ -370,44 +476,45 @@ $is_rtl = is_rtl();
         }
 
         .payment-item-body {
-            padding: 20px;
+            padding: 12px 14px;
+            flex: 1;
         }
 
         .payment-info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px 16px;
         }
 
         .payment-info-item {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 3px;
         }
 
         .payment-info-item label {
-            font-size: 12px;
+            font-size: 10px;
             font-weight: 600;
             color: #6c757d;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         .payment-info-item .info-value {
-            font-size: 15px;
+            font-size: 13px;
             font-weight: 600;
             color: #212529;
         }
 
         .payment-info-item .info-value.amount {
-            font-size: 18px;
+            font-size: 16px;
             color: #667eea;
             font-weight: 700;
         }
 
         .payment-info-item .info-value.transaction-id {
             font-family: monospace;
-            font-size: 13px;
+            font-size: 11px;
             color: #495057;
         }
 
@@ -435,7 +542,7 @@ $is_rtl = is_rtl();
         }
 
         .payment-item-footer {
-            padding: 16px 20px;
+            padding: 10px 14px;
             background: #f8f9fa;
             border-top: 1px solid #e9ecef;
             display: flex;
@@ -445,21 +552,21 @@ $is_rtl = is_rtl();
         .btn-view {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            padding: 10px 20px;
+            gap: 6px;
+            padding: 6px 14px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border-radius: 8px;
+            border-radius: 6px;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 12px;
             transition: all 0.2s ease;
             text-decoration: none;
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 1px 4px rgba(102, 126, 234, 0.3);
         }
 
         .btn-view:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
             color: white;
         }
 
@@ -480,7 +587,18 @@ $is_rtl = is_rtl();
             font-size: 14px;
         }
 
+        @media (max-width: 1200px) {
+            .payments-list {
+                grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            }
+        }
+
         @media (max-width: 768px) {
+            .payments-list {
+                grid-template-columns: 1fr;
+                max-height: none;
+            }
+
             .stats-cards {
                 grid-template-columns: 1fr;
             }
@@ -503,6 +621,69 @@ $is_rtl = is_rtl();
     <script src="assets/vendors/perfect-scrollbar/perfect-scrollbar.min.js"></script>
     <script src="assets/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/main.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const searchInput = $('#paymentSearch');
+            const clearButton = $('#clearPaymentSearch');
+            const resultsInfo = $('#paymentSearchResultsInfo');
+            const resultsCount = $('#paymentResultsCount');
+            const paymentItems = $('.payment-item');
+
+            // Show/hide clear button
+            searchInput.on('input', function() {
+                if ($(this).val().length > 0) {
+                    clearButton.show();
+                } else {
+                    clearButton.hide();
+                    resultsInfo.hide();
+                }
+            });
+
+            // Clear search
+            clearButton.on('click', function() {
+                searchInput.val('');
+                $(this).hide();
+                resultsInfo.hide();
+                filterPayments('');
+            });
+
+            // Search functionality
+            searchInput.on('input', function() {
+                const searchTerm = $(this).val().toLowerCase().trim();
+                filterPayments(searchTerm);
+            });
+
+            function filterPayments(searchTerm) {
+                let visibleCount = 0;
+
+                if (searchTerm === '') {
+                    paymentItems.removeClass('hidden');
+                    resultsInfo.hide();
+                    return;
+                }
+
+                paymentItems.each(function() {
+                    const $item = $(this);
+                    const tracking = $item.data('tracking') || '';
+                    const customer = $item.data('customer') || '';
+                    const status = $item.data('status') || '';
+
+                    const searchableText = (tracking + ' ' + customer + ' ' + status).toLowerCase();
+
+                    if (searchableText.includes(searchTerm)) {
+                        $item.removeClass('hidden');
+                        visibleCount++;
+                    } else {
+                        $item.addClass('hidden');
+                    }
+                });
+
+                resultsCount.text(visibleCount);
+                resultsInfo.show();
+            }
+        });
+    </script>
 </body>
 
 </html>

@@ -50,13 +50,31 @@ if (isset($_GET['function_code']) && $_GET['function_code'] == 'getCustomerTbleD
     $extensions_arr = array("jpg", "jpeg", "png", "gif", "jfif", "svg", "webp");
 } else if (isset($_GET['function_code']) && $_GET['function_code'] == 'deleteData') {
     ob_clean(); // Clear any output before JSON
-    $result = deleteDataTables($_POST);
     header('Content-Type: application/json');
+    
+    // Check if trying to delete a canceled order
+    if (isset($_POST['table']) && $_POST['table'] === 'request' && isset($_POST['id'])) {
+        include 'inc/connection.php';
+        $request_id = intval($_POST['id']);
+        $check_canceled = "SELECT tracking_status FROM request WHERE request_id = '$request_id'";
+        $canceled_result = mysqli_query($con, $check_canceled);
+        if ($canceled_result && mysqli_num_rows($canceled_result) > 0) {
+            $canceled_row = mysqli_fetch_assoc($canceled_result);
+            if (intval($canceled_row['tracking_status']) == 12) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'Canceled orders cannot be deleted.']);
+                ob_end_flush();
+                exit;
+            }
+        }
+    }
+    
+    $result = deleteDataTables($_POST);
     if ($result) {
         echo json_encode(['success' => true, 'message' => 'Item deleted successfully']);
     } else {
         http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Failed to delete item']);
+        echo json_encode(['success' => false, 'error' => 'Failed to delete item. The order may be canceled.']);
     }
     ob_end_flush();
     exit;
@@ -211,4 +229,166 @@ if (isset($_GET['function_code']) && $_GET['function_code'] == 'getCustomerTbleD
     } else {
         echo json_encode(array('success' => false, 'error' => 'Invalid order ID or request ID'));
     }
+} else if (isset($_GET['function_code']) && $_GET['function_code'] == 'saveOrderRating') {
+    header('Content-Type: application/json');
+    
+    if (isset($_POST['request_id']) && isset($_POST['rating'])) {
+        $data = array(
+            'request_id' => $_POST['request_id'],
+            'rating' => $_POST['rating'],
+            'rating_comment' => isset($_POST['rating_comment']) ? $_POST['rating_comment'] : null
+        );
+        
+        // Add customer_id if user is logged in
+        if (isset($_SESSION['auth']) && isset($_SESSION['customer_id'])) {
+            $data['customer_id'] = $_SESSION['customer_id'];
+        }
+        
+        echo saveOrderRating($data);
+    } else {
+        echo json_encode(array('success' => false, 'error' => 'Missing required parameters'));
+    }
+} else if (isset($_GET['function_code']) && $_GET['function_code'] == 'requestCancellation') {
+    header('Content-Type: application/json');
+    
+    if (isset($_POST['request_id']) && isset($_POST['cancellation_reason'])) {
+        if (!isset($_SESSION['auth']) || !isset($_SESSION['customer_id'])) {
+            echo json_encode(array('success' => false, 'error' => 'Authentication required'));
+            exit;
+        }
+        
+        // Check if order is already canceled
+        include 'inc/connection.php';
+        $request_id = intval($_POST['request_id']);
+        $check_order = "SELECT tracking_status FROM request WHERE request_id = '$request_id'";
+        $order_result = mysqli_query($con, $check_order);
+        if ($order_result && mysqli_num_rows($order_result) > 0) {
+            $order_row = mysqli_fetch_assoc($order_result);
+            if (intval($order_row['tracking_status']) == 12) {
+                echo json_encode(array('success' => false, 'error' => 'This order is already canceled and cannot be modified.'));
+                exit;
+            }
+        }
+        
+        $data = array(
+            'request_id' => $_POST['request_id'],
+            'customer_id' => $_SESSION['customer_id'],
+            'cancellation_reason' => $_POST['cancellation_reason']
+        );
+        
+        $cancellation_id = addCancellationRequest($data);
+        
+        if ($cancellation_id) {
+            echo json_encode(array('success' => true, 'cancellation_id' => $cancellation_id, 'message' => 'Cancellation request submitted successfully'));
+        } else {
+            echo json_encode(array('success' => false, 'error' => 'Failed to submit cancellation request. A pending request may already exist.'));
+        }
+    } else {
+        echo json_encode(array('success' => false, 'error' => 'Missing required parameters'));
+    }
+} else if (isset($_GET['function_code']) && $_GET['function_code'] == 'updateCancellationStatus') {
+    ob_clean(); // Clear any output before JSON
+    header('Content-Type: application/json');
+    
+    if (!isset($_SESSION['admin'])) {
+        echo json_encode(array('success' => false, 'error' => 'Admin authentication required'));
+        ob_end_flush();
+        exit;
+    }
+    
+    if (isset($_POST['cancellation_id']) && isset($_POST['status'])) {
+        $data = array(
+            'cancellation_id' => $_POST['cancellation_id'],
+            'status' => $_POST['status'],
+            'admin_response_comment' => isset($_POST['admin_response_comment']) ? $_POST['admin_response_comment'] : null
+        );
+        
+        $result = updateCancellationRequestStatus($data);
+        echo $result;
+        ob_end_flush();
+        exit;
+    } else {
+        echo json_encode(array('success' => false, 'error' => 'Missing required parameters'));
+        ob_end_flush();
+        exit;
+    }
+} else if (isset($_GET['function_code']) && $_GET['function_code'] == 'updateCustomerPayPalAccount') {
+    ob_clean();
+    header('Content-Type: application/json');
+    
+    if (!isset($_SESSION['auth']) || !isset($_SESSION['customer_id'])) {
+        echo json_encode(array('success' => false, 'error' => 'Authentication required'));
+        ob_end_flush();
+        exit;
+    }
+    
+    if (isset($_POST['cancellation_id']) && isset($_POST['paypal_account'])) {
+        $cancellation_id = intval($_POST['cancellation_id']);
+        $paypal_account = trim($_POST['paypal_account']);
+        
+        // Validate PayPal account (basic email validation)
+        if (!filter_var($paypal_account, FILTER_VALIDATE_EMAIL)) {
+            echo json_encode(array('success' => false, 'error' => 'Please enter a valid PayPal email address'));
+            ob_end_flush();
+            exit;
+        }
+        
+        // Verify cancellation request belongs to customer
+        $check_sql = "SELECT cr.* FROM cancellation_requests cr 
+                     JOIN request r ON r.request_id = cr.request_id 
+                     WHERE cr.cancellation_id = '$cancellation_id' 
+                     AND r.customer_id = '" . intval($_SESSION['customer_id']) . "'";
+        include 'inc/connection.php';
+        $check_result = mysqli_query($con, $check_sql);
+        
+        if (mysqli_num_rows($check_result) == 0) {
+            echo json_encode(array('success' => false, 'error' => 'Cancellation request not found or access denied'));
+            ob_end_flush();
+            exit;
+        }
+        
+        $result = updateCustomerPayPalAccount($cancellation_id, $paypal_account);
+        
+        if ($result) {
+            echo json_encode(array('success' => true, 'message' => 'PayPal account updated successfully'));
+        } else {
+            echo json_encode(array('success' => false, 'error' => 'Failed to update PayPal account'));
+        }
+    } else {
+        echo json_encode(array('success' => false, 'error' => 'Missing required parameters'));
+    }
+    ob_end_flush();
+    exit;
+} else if (isset($_GET['function_code']) && $_GET['function_code'] == 'markRefundCompleted') {
+    ob_clean();
+    header('Content-Type: application/json');
+    
+    if (!isset($_SESSION['admin'])) {
+        echo json_encode(array('success' => false, 'error' => 'Admin authentication required'));
+        ob_end_flush();
+        exit;
+    }
+    
+    if (isset($_POST['cancellation_id']) && isset($_POST['refund_transaction_id'])) {
+        $cancellation_id = intval($_POST['cancellation_id']);
+        $refund_transaction_id = trim($_POST['refund_transaction_id']);
+        
+        if (empty($refund_transaction_id)) {
+            echo json_encode(array('success' => false, 'error' => 'Transaction ID is required'));
+            ob_end_flush();
+            exit;
+        }
+        
+        $result = markRefundAsCompleted($cancellation_id, $refund_transaction_id);
+        
+        if ($result) {
+            echo json_encode(array('success' => true, 'message' => 'Refund marked as completed successfully'));
+        } else {
+            echo json_encode(array('success' => false, 'error' => 'Failed to update refund status'));
+        }
+    } else {
+        echo json_encode(array('success' => false, 'error' => 'Missing required parameters'));
+    }
+    ob_end_flush();
+    exit;
 }

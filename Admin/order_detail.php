@@ -57,7 +57,6 @@ $is_rtl = is_rtl();
                         <div class="order-detail-card">
                             <div class="order-detail-header">
                                 <div class="order-header-left">
-                                    <div class="order-id-badge"><?php __e('admin_order'); ?> #<?php echo $row['request_id']; ?></div>
                                     <div class="tracking-code-text"><?php __e('admin_tracking'); ?>: <strong><?php echo htmlspecialchars($row['tracking_code']); ?></strong></div>
                                 </div>
                                 <?php if (!empty($row['qr_code_path'])): ?>
@@ -192,6 +191,58 @@ $is_rtl = is_rtl();
                                         <?php endif; ?>
                                     </div>
                                 </div>
+
+                                <?php
+                                // Display rating if exists
+                                $order_rating = isset($row['rating']) ? intval($row['rating']) : null;
+                                $rating_comment = isset($row['rating_comment']) ? htmlspecialchars($row['rating_comment']) : '';
+                                $rating_date = isset($row['rating_date']) ? $row['rating_date'] : null;
+                                if ($order_rating):
+                                ?>
+                                <div class="info-section">
+                                    <div class="section-title"><?php __e('rating_title'); ?></div>
+                                    <div class="info-grid">
+                                        <div class="info-item">
+                                            <label><?php __e('rating_view'); ?></label>
+                                            <div class="info-value">
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <div style="display: flex; gap: 2px;">
+                                                        <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                            <span style="font-size: 20px; color: <?php echo $i <= $order_rating ? '#fbbf24' : '#d1d5db'; ?>;">★</span>
+                                                        <?php endfor; ?>
+                                                    </div>
+                                                    <span style="font-weight: 600; color: var(--text);"><?php echo $order_rating; ?>/5</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <?php if ($rating_comment): ?>
+                                        <div class="info-item full-width">
+                                            <label><?php __e('rating_comment'); ?></label>
+                                            <div class="info-value" style="padding: 12px; background: var(--panel); border-radius: 8px; border: 1px solid rgba(0,0,0,.08);">
+                                                <?php echo nl2br($rating_comment); ?>
+                                            </div>
+                                        </div>
+                                        <?php endif; ?>
+                                        <?php if ($rating_date): ?>
+                                        <div class="info-item">
+                                            <label><?php __e('rating_date'); ?></label>
+                                            <div class="info-value"><?php echo date('M d, Y H:i', strtotime($rating_date)); ?></div>
+                                        </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                <?php else: ?>
+                                <div class="info-section">
+                                    <div class="section-title"><?php __e('rating_title'); ?></div>
+                                    <div class="info-grid">
+                                        <div class="info-item">
+                                            <div class="info-value" style="color: var(--muted);">
+                                                <?php __e('rating_not_rated'); ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
 
                                 <?php
                                 // Get status history with timestamps - only show statuses that were actually reached
@@ -347,6 +398,25 @@ $is_rtl = is_rtl();
                             </div>
 
                             <div class="order-detail-footer">
+                                <?php 
+                                $is_canceled = (intval($row['tracking_status']) == 12);
+                                ?>
+                                
+                                <?php if ($is_canceled): ?>
+                                <!-- Order is Canceled - Locked State -->
+                                <div style="background: rgba(239, 68, 68, 0.1); border: 2px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 20px;">
+                                    <div style="font-size: 48px; color: #ef4444; margin-bottom: 16px;">
+                                        <i class="bi bi-lock-fill"></i>
+                                    </div>
+                                    <h4 style="margin: 0 0 8px; color: #ef4444; font-weight: 700;">
+                                        <?php __e('order_canceled_locked'); ?>
+                                    </h4>
+                                    <p style="margin: 0; color: #6c757d; font-size: 14px;">
+                                        <?php __e('order_canceled_locked_desc'); ?>
+                                    </p>
+                                </div>
+                                <?php endif; ?>
+                                
                                 <div class="action-controls">
                                     <div class="control-group status-control-group">
                                         <label for="tracking_status" class="control-label">
@@ -404,37 +474,44 @@ $is_rtl = is_rtl();
                                         
                                         <div class="status-select-wrapper">
                                             <select
-                                                onchange='handleStatusChange(this, "<?php echo $request_id; ?>", <?php echo $current_status; ?>)'
+                                                <?php if ($is_canceled): ?>disabled<?php else: ?>onchange='handleStatusChange(this, "<?php echo $request_id; ?>", <?php echo $current_status; ?>")'<?php endif; ?>
                                                 id="tracking_status <?php echo $request_id; ?>" 
-                                                class='form-control-modern status-select'
+                                                class='form-control-modern status-select <?php if ($is_canceled): ?>disabled-locked<?php endif; ?>'
                                                 name="tracking_status">
                                                 <option value="<?php echo $current_status; ?>" selected disabled>
                                                     <i class="fa <?php echo $current_status_info['icon']; ?>"></i> <?php echo htmlspecialchars($current_status_info['text']); ?> (<?php __e('admin_current_status'); ?>)
                                                 </option>
                                                 
-                                                <?php if (empty($next_statuses)): ?>
-                                                    <option disabled><?php __e('admin_no_next_status'); ?></option>
+                                                <?php if ($is_canceled): ?>
+                                                    <option disabled><?php __e('order_canceled_no_changes'); ?></option>
                                                 <?php else: ?>
-                                                    <optgroup label="➡️ <?php __e('admin_next_steps'); ?>">
-                                                        <?php foreach ($next_statuses as $next_status): ?>
-                                                            <?php if (isset($all_statuses[$next_status])): ?>
-                                                                <option value="<?php echo $next_status; ?>">
-                                                                    <i class="fa <?php echo $all_statuses[$next_status]['icon']; ?>"></i> <?php echo htmlspecialchars($all_statuses[$next_status]['text']); ?>
-                                                                </option>
-                                                            <?php endif; ?>
-                                                        <?php endforeach; ?>
+                                                    <?php if (empty($next_statuses)): ?>
+                                                        <option disabled><?php __e('admin_no_next_status'); ?></option>
+                                                    <?php else: ?>
+                                                        <optgroup label="➡️ <?php __e('admin_next_steps'); ?>">
+                                                            <?php foreach ($next_statuses as $next_status): ?>
+                                                                <?php if (isset($all_statuses[$next_status])): ?>
+                                                                    <option value="<?php echo $next_status; ?>">
+                                                                        <i class="fa <?php echo $all_statuses[$next_status]['icon']; ?>"></i> <?php echo htmlspecialchars($all_statuses[$next_status]['text']); ?>
+                                                                    </option>
+                                                                <?php endif; ?>
+                                                            <?php endforeach; ?>
+                                                        </optgroup>
+                                                    <?php endif; ?>
+                                                    
+                                                    <?php if (isAdmin()): ?>
+                                                    <optgroup label="➕ <?php __e('admin_add_custom_status'); ?>">
+                                                        <option value="__add_new__"><?php __e('admin_add_new_status'); ?></option>
                                                     </optgroup>
+                                                    <?php endif; ?>
                                                 <?php endif; ?>
-                                                
-                                                <optgroup label="➕ <?php __e('admin_add_custom_status'); ?>">
-                                                    <option value="__add_new__"><?php __e('admin_add_new_status'); ?></option>
-                                                </optgroup>
                                             </select>
                                             <div class="status-select-icon">
                                                 <i class="bi bi-chevron-down"></i>
                                             </div>
                                         </div>
                                         
+                                        <?php if (isAdmin()): ?>
                                         <!-- Custom Status Input Modal -->
                                         <div class="custom-status-input-wrapper" id="custom_status_input_<?php echo $request_id; ?>" style="display: none;">
                                             <div class="custom-status-input-box">
@@ -492,28 +569,186 @@ $is_rtl = is_rtl();
                                                 </div>
                                             </div>
                                         </div>
+                                        <?php endif; ?>
                                         
                                         <small class="status-help-text"><?php __e('admin_status_step_by_step_note'); ?></small>
                                     </div>
                                     <div class="control-group">
                                         <label for="payment_status" class="control-label"><?php __e('admin_payment_status'); ?></label>
                                         <select
-                                            onchange='updateData(this, "<?php echo $request_id; ?>","payment_status", "request", "request_id")'
+                                            <?php if ($is_canceled): ?>disabled<?php else: ?>onchange='updateData(this, "<?php echo $request_id; ?>","payment_status", "request", "request_id")'<?php endif; ?>
                                             id="payment_status <?php echo $request_id; ?>" 
-                                            class='form-control-modern'
+                                            class='form-control-modern <?php if ($is_canceled): ?>disabled-locked<?php endif; ?>'
                                             name="payment_status">
                                             <option value="pending" <?php if (($row['payment_status'] ?? 'pending') == "pending") echo "selected"; ?>><?php __e('admin_pending'); ?></option>
                                             <option value="paid" <?php if (($row['payment_status'] ?? 'pending') == "paid") echo "selected"; ?>><?php __e('admin_paid'); ?></option>
                                             <option value="failed" <?php if (($row['payment_status'] ?? 'pending') == "failed") echo "selected"; ?>><?php __e('admin_failed'); ?></option>
                                         </select>
+                                        <?php if ($is_canceled): ?>
+                                        <small style="color: #6c757d; font-size: 11px; display: block; margin-top: 4px;">
+                                            <i class="bi bi-lock"></i> <?php __e('order_canceled_locked'); ?>
+                                        </small>
+                                        <?php endif; ?>
                                     </div>
+                                    <?php
+                                    // Check for cancellation request
+                                    $cancellation_request = null;
+                                    $cancellation_result = getCancellationRequestByRequestId($request_id);
+                                    if ($cancellation_result && mysqli_num_rows($cancellation_result) > 0) {
+                                        $cancellation_request = mysqli_fetch_assoc($cancellation_result);
+                                    }
+                                    ?>
+                                    
+                                    <?php if ($cancellation_request): ?>
+                                    <div class="control-group" style="grid-column: 1 / -1;">
+                                        <label class="control-label"><?php __e('admin_cancellation_request'); ?></label>
+                                        <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; border: 1px solid #e9ecef;">
+                                            <div style="margin-bottom: 12px;">
+                                                <strong><?php __e('cancellation_request_status'); ?>:</strong>
+                                                <span style="padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; margin-left: 8px;
+                                                    <?php 
+                                                    if ($cancellation_request['cancellation_status'] == 'pending') {
+                                                        echo 'background: rgba(245, 158, 11, 0.1); color: #f59e0b;';
+                                                    } elseif ($cancellation_request['cancellation_status'] == 'approved') {
+                                                        echo 'background: rgba(239, 68, 68, 0.1); color: #ef4444;';
+                                                    } else {
+                                                        echo 'background: rgba(0, 0, 0, 0.06); color: #495057;';
+                                                    }
+                                                    ?>">
+                                                    <?php 
+                                                    if ($cancellation_request['cancellation_status'] == 'pending') {
+                                                        __e('cancellation_request_pending');
+                                                    } elseif ($cancellation_request['cancellation_status'] == 'approved') {
+                                                        __e('cancellation_request_approved');
+                                                    } else {
+                                                        __e('cancellation_request_rejected');
+                                                    }
+                                                    ?>
+                                                </span>
+                                            </div>
+                                            <div style="margin-bottom: 12px;">
+                                                <strong><?php __e('cancellation_request_reason'); ?>:</strong>
+                                                <div style="margin-top: 4px; color: #495057; padding: 8px; background: white; border-radius: 6px; border: 1px solid #e9ecef;">
+                                                    <?php echo nl2br(htmlspecialchars($cancellation_request['cancellation_reason'])); ?>
+                                                </div>
+                                            </div>
+                                            <div style="margin-bottom: 12px; font-size: 12px; color: #6c757d;">
+                                                <strong><?php __e('cancellation_request_date'); ?>:</strong> <?php echo date('M d, Y H:i', strtotime($cancellation_request['requested_date'])); ?>
+                                            </div>
+                                            
+                                            <?php if ($cancellation_request['cancellation_status'] == 'pending' && !$is_canceled): ?>
+                                            <div style="display: flex; gap: 8px; margin-top: 16px;">
+                                                <button type="button" 
+                                                        onclick="handleCancellationRequest(<?php echo $cancellation_request['cancellation_id']; ?>, 'approved', <?php echo $request_id; ?>)"
+                                                        class="btn" style="flex: 1; background: #10b981; color: white; padding: 10px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600;">
+                                                    <i class="bi bi-check-circle"></i> <?php __e('admin_approve_cancellation'); ?>
+                                                </button>
+                                                <button type="button" 
+                                                        onclick="showRejectModal(<?php echo $cancellation_request['cancellation_id']; ?>, <?php echo $request_id; ?>)"
+                                                        class="btn" style="flex: 1; background: #ef4444; color: white; padding: 10px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600;">
+                                                    <i class="bi bi-x-circle"></i> <?php __e('admin_reject_cancellation'); ?>
+                                                </button>
+                                            </div>
+                                            <?php elseif ($is_canceled): ?>
+                                            <div style="margin-top: 12px; padding: 8px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px;">
+                                                <i class="bi bi-lock"></i> <?php __e('order_canceled_locked'); ?>
+                                            </div>
+                                            <?php elseif ($cancellation_request['admin_response_comment']): ?>
+                                            <div style="margin-top: 12px; padding: 8px; background: white; border-radius: 6px; border: 1px solid #e9ecef;">
+                                                <strong><?php __e('cancellation_request_admin_response'); ?>:</strong>
+                                                <div style="margin-top: 4px; color: #495057;">
+                                                    <?php echo nl2br(htmlspecialchars($cancellation_request['admin_response_comment'])); ?>
+                                                </div>
+                                            </div>
+                                            <?php endif; ?>
+                                            
+                                            <?php 
+                                            // Show refund section if cancellation is approved and payment was made
+                                            $order_payment_method = $row['payment_method'] ?? 'cod';
+                                            $order_payment_status = $row['payment_status'] ?? 'pending';
+                                            if ($cancellation_request['cancellation_status'] == 'approved' && 
+                                                $order_payment_method == 'paypal' && 
+                                                $order_payment_status == 'paid'): 
+                                            ?>
+                                            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e9ecef;">
+                                                <h5 style="margin: 0 0 12px; font-size: 14px; font-weight: 600; color: #2c3e50;">
+                                                    <i class="bi bi-arrow-counterclockwise"></i> <?php __e('refund_title'); ?>
+                                                </h5>
+                                                
+                                                <?php if ($cancellation_request['refund_status'] == 'completed'): ?>
+                                                    <!-- Refund completed -->
+                                                    <div style="padding: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px;">
+                                                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                                            <i class="bi bi-check-circle-fill" style="color: #10b981; font-size: 18px;"></i>
+                                                            <strong style="color: #10b981;"><?php __e('refund_completed'); ?></strong>
+                                                        </div>
+                                                        <?php if ($cancellation_request['refund_date']): ?>
+                                                        <div style="font-size: 12px; color: #6c757d;">
+                                                            <?php __e('refund_date'); ?>: <?php echo date('M d, Y H:i', strtotime($cancellation_request['refund_date'])); ?>
+                                                        </div>
+                                                        <?php endif; ?>
+                                                        <?php if ($cancellation_request['refund_transaction_id']): ?>
+                                                        <div style="font-size: 12px; color: #6c757d; margin-top: 4px;">
+                                                            <?php __e('refund_transaction_id'); ?>: <?php echo htmlspecialchars($cancellation_request['refund_transaction_id']); ?>
+                                                        </div>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                <?php elseif ($cancellation_request['refund_status'] == 'pending'): ?>
+                                                    <!-- Refund pending - show PayPal account and mark as completed button -->
+                                                    <div style="padding: 12px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px;">
+                                                        <div style="margin-bottom: 12px;">
+                                                            <strong style="color: #f59e0b;"><?php __e('refund_pending'); ?></strong>
+                                                        </div>
+                                                        
+                                                        <?php if ($cancellation_request['refund_amount']): ?>
+                                                        <div style="margin-bottom: 12px; font-size: 14px;">
+                                                            <strong><?php __e('refund_amount'); ?>:</strong> SAR<?php echo number_format(floatval($cancellation_request['refund_amount']), 2); ?>
+                                                        </div>
+                                                        <?php endif; ?>
+                                                        
+                                                        <?php if (!empty($cancellation_request['customer_paypal_account'])): ?>
+                                                        <div style="margin-bottom: 12px; padding: 10px; background: white; border-radius: 6px; border: 1px solid #e9ecef;">
+                                                            <strong><?php __e('refund_customer_paypal'); ?>:</strong>
+                                                            <div style="margin-top: 4px; font-family: monospace; color: #495057;">
+                                                                <?php echo htmlspecialchars($cancellation_request['customer_paypal_account']); ?>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <?php if ($cancellation_request['refund_status'] == 'pending'): ?>
+                                                        <div style="margin-top: 16px;">
+                                                            <button type="button" 
+                                                                    onclick="showRefundCompleteModal(<?php echo $cancellation_request['cancellation_id']; ?>, <?php echo $cancellation_request['refund_amount'] ?? 0; ?>)"
+                                                                    class="btn" style="background: #10b981; color: white; padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600;">
+                                                                <i class="bi bi-check-circle"></i> <?php __e('admin_mark_refund_completed'); ?>
+                                                            </button>
+                                                        </div>
+                                                        <?php endif; ?>
+                                                        <?php else: ?>
+                                                        <div style="padding: 10px; background: rgba(37, 99, 235, 0.1); border: 1px solid rgba(37, 99, 235, 0.3); border-radius: 6px;">
+                                                            <i class="bi bi-info-circle"></i> <?php __e('refund_waiting_customer_paypal'); ?>
+                                                        </div>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                    <?php endif; ?>
+                                    
                                     <div class="control-group">
                                         <label class="control-label"><?php __e('admin_actions'); ?></label>
                                         <button type="button"
                                             onclick="deleteData(<?php echo $row['request_id']; ?>,'request', 'request_id')"
-                                            class="btn-delete-action">
+                                            class="btn-delete-action"
+                                            <?php if ($is_canceled): ?>disabled style="opacity: 0.5; cursor: not-allowed;"<?php endif; ?>>
                                             <i class="bi bi-trash"></i> <?php __e('admin_delete_order'); ?>
                                         </button>
+                                        <?php if ($is_canceled): ?>
+                                        <small style="color: #6c757d; font-size: 11px; display: block; margin-top: 4px;">
+                                            <i class="bi bi-lock"></i> <?php __e('order_canceled_cannot_delete'); ?>
+                                        </small>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                                 <div class="back-button-container">
@@ -851,6 +1086,13 @@ $is_rtl = is_rtl();
         }
         
         function deleteData(id, table, id_field) {
+            // Check if order is canceled
+            const isCanceled = <?php echo isset($is_canceled) && $is_canceled ? 'true' : 'false'; ?>;
+            if (isCanceled) {
+                alert('<?php echo addslashes(__t('order_canceled_cannot_delete')); ?>');
+                return;
+            }
+            
             if (confirm("<?php __e('admin_confirm_delete'); ?>")) {
                 const data = {
                     id: id,
@@ -862,15 +1104,185 @@ $is_rtl = is_rtl();
                     method: "POST",
                     url: "../server/api.php?function_code=deleteData",
                     data: data,
+                    dataType: 'json',
                     success: function(response) {
-                        location.reload();
+                        if (response && response.success) {
+                            location.reload();
+                        } else {
+                            alert(response.error || response.message || '<?php echo addslashes(__t('order_canceled_cannot_delete')); ?>');
+                        }
                     },
-                    error: function(error) {
+                    error: function(xhr, status, error) {
                         console.error("Delete failed:", error);
-                        alert("Failed to delete data.");
+                        let errorMsg = "Failed to delete data.";
+                        try {
+                            if (xhr.responseText) {
+                                const response = JSON.parse(xhr.responseText);
+                                if (response && response.error) {
+                                    errorMsg = response.error;
+                                }
+                            }
+                        } catch (e) {
+                            // Use default error
+                        }
+                        alert(errorMsg);
                     }
                 });
             }
+        }
+        
+        // Cancellation request handling
+        function handleCancellationRequest(cancellation_id, status, request_id, comment) {
+            // If comment is not provided and status is rejected, show prompt
+            if (status === 'rejected' && !comment) {
+                comment = prompt('<?php echo addslashes(__t('admin_rejection_reason_prompt')); ?>', '');
+                if (comment === null || comment.trim() === '') {
+                    return; // User cancelled or entered empty string
+                }
+            }
+            
+            const data = {
+                cancellation_id: cancellation_id,
+                status: status,
+                admin_response_comment: comment || null
+            };
+            
+            console.log('Submitting cancellation request:', data);
+            
+            // Show loading indicator
+            const originalButtons = document.querySelectorAll('button[onclick*="handleCancellationRequest"], button[onclick*="showRejectModal"]');
+            originalButtons.forEach(btn => {
+                btn.disabled = true;
+                btn.style.opacity = '0.6';
+                const originalText = btn.innerHTML;
+                btn.setAttribute('data-original-text', originalText);
+                btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+            });
+            
+            $.ajax({
+                method: "POST",
+                url: "../server/api.php?function_code=updateCancellationStatus",
+                data: data,
+                dataType: 'json',
+                timeout: 10000,
+                success: function(response) {
+                    console.log('Cancellation request response:', response);
+                    
+                    // Re-enable buttons
+                    originalButtons.forEach(btn => {
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                        const originalText = btn.getAttribute('data-original-text');
+                        if (originalText) {
+                            btn.innerHTML = originalText;
+                        }
+                    });
+                    
+                    if (response && response.success) {
+                        alert(response.message || '<?php echo addslashes(__t('cancellation_request_processed')); ?>');
+                        location.reload();
+                    } else {
+                        let errorMsg = '<?php echo addslashes(__t('cancellation_request_error')); ?>';
+                        if (response && response.error) {
+                            errorMsg = response.error;
+                        }
+                        alert(errorMsg);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Cancellation request update failed:", error);
+                    console.error("Status:", status);
+                    console.error("Response:", xhr.responseText);
+                    console.error("XHR object:", xhr);
+                    
+                    // Re-enable buttons
+                    originalButtons.forEach(btn => {
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                        const originalText = btn.getAttribute('data-original-text');
+                        if (originalText) {
+                            btn.innerHTML = originalText;
+                        }
+                    });
+                    
+                    let errorMsg = '<?php echo addslashes(__t('cancellation_request_error')); ?>';
+                    try {
+                        if (xhr.responseText) {
+                            const response = JSON.parse(xhr.responseText);
+                            if (response && response.error) {
+                                errorMsg = response.error;
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Error parsing response:", e);
+                        // Use default error message
+                    }
+                    alert(errorMsg);
+                }
+            });
+        }
+        
+        function showRejectModal(cancellation_id, request_id) {
+            const comment = prompt('<?php echo addslashes(__t('admin_rejection_reason_prompt')); ?>', '');
+            if (comment !== null && comment.trim() !== '') {
+                handleCancellationRequest(cancellation_id, 'rejected', request_id, comment);
+            }
+        }
+        
+        // Refund completion handling
+        function showRefundCompleteModal(cancellation_id, refund_amount) {
+            const transactionId = prompt('<?php echo addslashes(__t('admin_refund_transaction_prompt')); ?>', '');
+            if (transactionId !== null && transactionId.trim() !== '') {
+                markRefundAsCompleted(cancellation_id, transactionId.trim());
+            }
+        }
+        
+        function markRefundAsCompleted(cancellation_id, transaction_id) {
+            const data = {
+                cancellation_id: cancellation_id,
+                refund_transaction_id: transaction_id
+            };
+            
+            console.log('Marking refund as completed:', data);
+            
+            $.ajax({
+                method: "POST",
+                url: "../server/api.php?function_code=markRefundCompleted",
+                data: data,
+                dataType: 'json',
+                timeout: 10000,
+                success: function(response) {
+                    console.log('Refund completion response:', response);
+                    
+                    if (response && response.success) {
+                        alert(response.message || '<?php echo addslashes(__t('refund_marked_completed')); ?>');
+                        location.reload();
+                    } else {
+                        let errorMsg = '<?php echo addslashes(__t('refund_error')); ?>';
+                        if (response && response.error) {
+                            errorMsg = response.error;
+                        }
+                        alert(errorMsg);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Refund completion failed:", error);
+                    console.error("Response:", xhr.responseText);
+                    
+                    let errorMsg = '<?php echo addslashes(__t('refund_error')); ?>';
+                    try {
+                        if (xhr.responseText) {
+                            const response = JSON.parse(xhr.responseText);
+                            if (response && response.error) {
+                                errorMsg = response.error;
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Error parsing response:", e);
+                    }
+                    alert(errorMsg);
+                }
+            });
         }
     </script>
     
@@ -1545,10 +1957,18 @@ $is_rtl = is_rtl();
         font-size: 18px;
     }
 
-    .status-select:disabled {
+    .status-select:disabled,
+    .status-select.disabled-locked,
+    .form-control-modern.disabled-locked {
         background: #f8f9fa;
         cursor: not-allowed;
-        opacity: 0.7;
+        opacity: 0.6;
+        border-color: #e9ecef;
+    }
+    
+    .btn-delete-action:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 
     /* Custom Status Input Styles */

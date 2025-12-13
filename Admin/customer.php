@@ -61,7 +61,6 @@ $is_rtl = is_rtl();
                                              data-nic="<?php echo strtolower(htmlspecialchars($row['nic'])); ?>">
                                             <div class="customer-item-header">
                                                 <div class="customer-id-section">
-                                                    <span class="customer-id-badge">ID: <?php echo $customer_id; ?></span>
                                                     <?php if ($row['active'] == 1): ?>
                                                         <span class="badge-status active">Active</span>
                                                     <?php else: ?>
@@ -205,28 +204,52 @@ $is_rtl = is_rtl();
         }
 
         .customers-list {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 16px;
+            max-height: calc(100vh - 350px);
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .customers-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .customers-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .customers-list::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        .customers-list::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
         }
 
         .customer-list-item {
             background: #ffffff;
             border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-            transition: all 0.3s ease;
+            border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .customer-list-item:hover {
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
             border-color: #d0d0d0;
+            transform: translateY(-1px);
         }
 
         .customer-item-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 14px 20px;
+            padding: 10px 14px;
         }
 
         .customer-id-section {
@@ -238,20 +261,20 @@ $is_rtl = is_rtl();
         .customer-id-badge {
             background: rgba(255, 255, 255, 0.2);
             color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 11px;
             font-weight: 600;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         .badge-status {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 10px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         .badge-status.active {
@@ -267,14 +290,15 @@ $is_rtl = is_rtl();
         }
 
         .customer-item-body {
-            padding: 20px;
+            padding: 12px 14px;
+            flex: 1;
         }
 
         .customer-fields-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 16px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px 12px;
+            margin-bottom: 12px;
         }
 
         .customer-field {
@@ -283,20 +307,20 @@ $is_rtl = is_rtl();
         }
 
         .customer-field label {
-            font-size: 12px;
+            font-size: 10px;
             font-weight: 600;
             color: #495057;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         .editable-input {
             width: 100%;
-            padding: 10px 14px;
+            padding: 8px 10px;
             border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 14px;
+            border-radius: 6px;
+            font-size: 12px;
             transition: all 0.2s ease;
             background: #f8f9fa;
         }
@@ -341,11 +365,28 @@ $is_rtl = is_rtl();
         }
 
         .customer-item-footer {
-            padding: 16px 20px;
+            padding: 10px 14px;
             background: #f8f9fa;
             border-top: 1px solid #e9ecef;
             display: flex;
             justify-content: flex-end;
+        }
+
+        @media (max-width: 1200px) {
+            .customers-list {
+                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .customers-list {
+                grid-template-columns: 1fr;
+                max-height: none;
+            }
+
+            .customer-fields-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         .btn-delete {

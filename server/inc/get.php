@@ -542,4 +542,37 @@ function getAllOrderItems($order_id)
     return mysqli_query($con, $viewcat);
 }
 
+function getCancellationRequestByRequestId($request_id)
+{
+    include 'connection.php';
+    
+    $q1 = "SELECT * FROM cancellation_requests WHERE request_id = '$request_id' ORDER BY requested_date DESC LIMIT 1";
+    return mysqli_query($con, $q1);
+}
+
+function getAllPendingCancellationRequests()
+{
+    include 'connection.php';
+    
+    $q1 = "SELECT cr.*, r.tracking_code, r.request_id, c.name as customer_name, c.email as customer_email, c.phone as customer_phone
+           FROM cancellation_requests cr
+           JOIN request r ON r.request_id = cr.request_id
+           JOIN customer c ON c.customer_id = cr.customer_id
+           WHERE cr.cancellation_status = 'pending'
+           ORDER BY cr.requested_date DESC";
+    return mysqli_query($con, $q1);
+}
+
+function getCancellationRequestById($cancellation_id)
+{
+    include 'connection.php';
+    
+    $q1 = "SELECT cr.*, r.tracking_code, c.name as customer_name, c.email as customer_email
+           FROM cancellation_requests cr
+           JOIN request r ON r.request_id = cr.request_id
+           JOIN customer c ON c.customer_id = cr.customer_id
+           WHERE cr.cancellation_id = '$cancellation_id'";
+    return mysqli_query($con, $q1);
+}
+
 } // End of function_exists check

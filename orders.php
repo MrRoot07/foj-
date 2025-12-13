@@ -3,8 +3,9 @@ session_start();
 // Include i18n bootstrap
 require_once __DIR__ . '/bootstrap/i18n.php';
 include 'pages/head.php';
-include 'auth.php';
 include 'conf.php';
+include 'server/inc/get.php';
+include 'auth.php';
 
 if (!isset($_SESSION['auth'])) {
     header("Location: login.php");
@@ -367,10 +368,41 @@ $is_rtl = is_rtl();
                             </div>
                         </div>
 
+                        <?php
+                        // Display rating if exists
+                        $order_rating = isset($row['rating']) ? intval($row['rating']) : null;
+                        if ($order_rating):
+                        ?>
+                        <div class="order-rating" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(0,0,0,.08);">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 13px; color: var(--muted);"><?php __e('rating_view'); ?>:</span>
+                                <div style="display: flex; gap: 2px;">
+                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                        <span style="font-size: 16px; color: <?php echo $i <= $order_rating ? '#fbbf24' : '#d1d5db'; ?>;">★</span>
+                                    <?php endfor; ?>
+                                </div>
+                                <span style="font-size: 13px; color: var(--muted);">(<?php echo $order_rating; ?>/5)</span>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
                         <div class="order-actions">
                             <a href="tracking.php?order_id=<?php echo $request_id; ?>" class="btn btn-primary">
                                 <i class="bi bi-eye"></i> <?php __e('orders_track'); ?>
                             </a>
+                            <?php 
+                            // Show "Rate Order" button for all orders
+                            $has_rating = isset($row['rating']) && intval($row['rating']) > 0;
+                            if (!$has_rating): 
+                            ?>
+                                <a href="tracking.php?order_id=<?php echo $request_id; ?>#rating" class="btn" style="background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; border: none;">
+                                    <i class="bi bi-star-fill"></i> <?php __e('rating_submit'); ?>
+                                </a>
+                            <?php else: ?>
+                                <a href="tracking.php?order_id=<?php echo $request_id; ?>#rating" class="btn btn-secondary">
+                                    <i class="bi bi-star"></i> <?php __e('rating_view'); ?>
+                                </a>
+                            <?php endif; ?>
                             <?php if ($payment_method == 'paypal' && $payment_status == 'pending'): ?>
                                 <a href="payment.php?request_id=<?php echo $request_id; ?>" class="btn btn-success">
                                     <i class="bi bi-credit-card"></i> <?php __e('orders_pay_now'); ?>

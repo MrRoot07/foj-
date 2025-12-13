@@ -2,10 +2,9 @@
 session_start();
 // Include i18n bootstrap
 require_once __DIR__ . '/bootstrap/i18n.php';
-include 'pages/head.php';
-include 'auth.php';
 include 'conf.php';
 include 'server/inc/get.php';
+include 'auth.php';
 
 if (!isset($_SESSION['auth'])) {
     header("Location: login.php");
@@ -815,26 +814,299 @@ $is_rtl = is_rtl();
                                 </div>
                         <?php } ?>
 
-                            <div class="actions-section">
-                                <?php if ($row['tracking_status'] == "1" || $row['tracking_status'] == "12") { ?>
-                                    <div style="flex: 1; min-width: 200px;">
-                                        <label for="tracking_status" class="form-label"><?php __e('tracking_order_cancel'); ?></label>
-                                    <select
-                                        onchange='updateDataFromHome(this, "<?php echo $request_id; ?>","tracking_status", "request", "request_id")'
-                                            id="tracking_status <?php echo $request_id; ?>" 
-                                            class='form-control'
-                                            name="tracking_status">
-                                            <option value="1"><?php __e('tracking_select_status'); ?></option>
-                                            <option value="12" <?php if ($row['tracking_status'] == "12" || $row['tracking_status'] == "5") echo "selected"; ?>><?php __e('tracking_status_canceled'); ?></option>
-                                    </select>
+                            <?php
+                            // Check for cancellation request
+                            $cancellation_request = null;
+                            $cancellation_result = getCancellationRequestByRequestId($request_id);
+                            if ($cancellation_result && mysqli_num_rows($cancellation_result) > 0) {
+                                $cancellation_request = mysqli_fetch_assoc($cancellation_result);
+                            }
+                            
+                            $is_canceled = ($row['tracking_status'] == 12);
+                            ?>
+                            
+                            <?php if ($is_canceled): ?>
+                            <!-- Order is Canceled - Locked State -->
+                            <div style="background: rgba(239, 68, 68, 0.1); border: 2px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 24px; text-align: center; margin-top: 24px;">
+                                <div style="font-size: 48px; color: var(--danger); margin-bottom: 16px;">
+                                    <i class="bi bi-lock-fill"></i>
                                 </div>
-                            <?php } ?>
+                                <h4 style="margin: 0 0 8px; color: var(--danger); font-weight: 700;">
+                                    <?php __e('order_canceled_locked'); ?>
+                                </h4>
+                                <p style="margin: 0; color: var(--muted); font-size: 14px;">
+                                    <?php __e('order_canceled_locked_desc'); ?>
+                                </p>
+                            </div>
+                            <?php endif; ?>
+                            
+                            <div class="actions-section">
+                                <?php if (!$is_canceled && $row['tracking_status'] != "11"): ?>
+                                    <?php if (!$cancellation_request || $cancellation_request['cancellation_status'] == 'rejected'): ?>
+                                        <!-- Show cancellation request button if no pending request or if previous was rejected -->
+                                        <div style="flex: 1; min-width: 200px;">
+                                            <button type="button" class="btn" style="background: var(--danger); color: white;" onclick="showCancellationForm(<?php echo $request_id; ?>)">
+                                                <i class="bi bi-x-circle"></i> <?php __e('cancellation_request_cancel'); ?>
+                                            </button>
+                                        </div>
+                                    <?php elseif ($cancellation_request['cancellation_status'] == 'pending'): ?>
+                                        <!-- Show pending cancellation status -->
+                                        <div style="flex: 1; min-width: 200px; padding: 12px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px;">
+                                            <div style="font-size: 13px; font-weight: 600; color: var(--warn); margin-bottom: 4px;">
+                                                <i class="bi bi-clock-history"></i> <?php __e('cancellation_request_pending'); ?>
+                                            </div>
+                                            <div style="font-size: 12px; color: var(--muted);">
+                                                <?php __e('cancellation_request_waiting'); ?>
+                                            </div>
+                                        </div>
+                                    <?php elseif ($cancellation_request['cancellation_status'] == 'approved'): ?>
+                                        <!-- Show approved cancellation -->
+                                        <div style="flex: 1; min-width: 200px; padding: 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px;">
+                                            <div style="font-size: 13px; font-weight: 600; color: var(--danger);">
+                                                <i class="bi bi-check-circle"></i> <?php __e('cancellation_request_approved'); ?>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
+                                <?php endif; ?>
                                 
-                                <?php if ($payment_method == 'paypal' && $payment_status == 'pending'): ?>
+                                <?php if (!$is_canceled && $payment_method == 'paypal' && $payment_status == 'pending'): ?>
                                     <div style="display: flex; align-items: flex-end;">
                                         <a href="payment.php?request_id=<?php echo $request_id; ?>" class="btn btn-success">
                                             <i class="bi bi-credit-card"></i> <?php __e('tracking_pay_now'); ?>
                                         </a>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                            
+                            <!-- Cancellation Request Form Modal -->
+                            <div id="cancellationModal_<?php echo $request_id; ?>" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center;">
+                                <div style="background: white; padding: 24px; border-radius: 12px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                        <h3 style="margin: 0;"><?php __e('cancellation_request_title'); ?></h3>
+                                        <button type="button" onclick="hideCancellationForm(<?php echo $request_id; ?>)" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--muted);">&times;</button>
+                                    </div>
+                                    <form id="cancellationForm_<?php echo $request_id; ?>" onsubmit="submitCancellationRequest(event, <?php echo $request_id; ?>)">
+                                        <div style="margin-bottom: 20px;">
+                                            <label class="form-label" style="display: block; font-weight: 600; margin-bottom: 8px;">
+                                                <?php __e('cancellation_request_reason'); ?> <span style="color: var(--danger);">*</span>
+                                            </label>
+                                            <textarea name="cancellation_reason" id="cancellation_reason_<?php echo $request_id; ?>" 
+                                                      class="form-control" rows="5" 
+                                                      placeholder="<?php __e('cancellation_request_reason_placeholder'); ?>" 
+                                                      required style="resize: vertical; width: 100%; padding: 12px; border: 2px solid rgba(0,0,0,.12); border-radius: 8px; font-family: inherit; font-size: 14px;"></textarea>
+                                        </div>
+                                        <div style="display: flex; gap: 12px;">
+                                            <button type="submit" class="btn" style="flex: 1; background: var(--danger); color: white;">
+                                                <i class="bi bi-send"></i> <?php __e('cancellation_request_submit'); ?>
+                                            </button>
+                                            <button type="button" onclick="hideCancellationForm(<?php echo $request_id; ?>)" class="btn btn-secondary" style="flex: 1;">
+                                                <?php __e('cancel'); ?>
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <?php if ($cancellation_request): ?>
+                            <!-- Show cancellation request details -->
+                            <div style="margin-top: 24px; padding: 16px; background: var(--panel); border: 1px solid rgba(0,0,0,.08); border-radius: 12px;">
+                                <h4 style="margin: 0 0 12px; font-size: 16px; font-weight: 600;"><?php __e('cancellation_request_details'); ?></h4>
+                                <div style="display: grid; gap: 8px; font-size: 14px;">
+                                    <div>
+                                        <strong><?php __e('cancellation_request_reason'); ?>:</strong>
+                                        <div style="margin-top: 4px; color: var(--muted);"><?php echo nl2br(htmlspecialchars($cancellation_request['cancellation_reason'])); ?></div>
+                                    </div>
+                                    <div>
+                                        <strong><?php __e('cancellation_request_status'); ?>:</strong>
+                                        <span style="padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; margin-left: 8px;
+                                            <?php 
+                                            if ($cancellation_request['cancellation_status'] == 'pending') {
+                                                echo 'background: rgba(245, 158, 11, 0.1); color: var(--warn);';
+                                            } elseif ($cancellation_request['cancellation_status'] == 'approved') {
+                                                echo 'background: rgba(239, 68, 68, 0.1); color: var(--danger);';
+                                            } else {
+                                                echo 'background: rgba(0, 0, 0, 0.06); color: var(--muted);';
+                                            }
+                                            ?>">
+                                            <?php 
+                                            if ($cancellation_request['cancellation_status'] == 'pending') {
+                                                __e('cancellation_request_pending');
+                                            } elseif ($cancellation_request['cancellation_status'] == 'approved') {
+                                                __e('cancellation_request_approved');
+                                            } else {
+                                                __e('cancellation_request_rejected');
+                                            }
+                                            ?>
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <strong><?php __e('cancellation_request_date'); ?>:</strong>
+                                        <span style="color: var(--muted);"><?php echo date('M d, Y H:i', strtotime($cancellation_request['requested_date'])); ?></span>
+                                    </div>
+                                    <?php if ($cancellation_request['admin_response_comment']): ?>
+                                    <div>
+                                        <strong><?php __e('cancellation_request_admin_response'); ?>:</strong>
+                                        <div style="margin-top: 4px; color: var(--muted);"><?php echo nl2br(htmlspecialchars($cancellation_request['admin_response_comment'])); ?></div>
+                                    </div>
+                                    <?php endif; ?>
+                                    
+                                    <?php 
+                                    // Show refund section if cancellation is approved and payment was made
+                                    if ($cancellation_request['cancellation_status'] == 'approved' && 
+                                        $payment_method == 'paypal' && 
+                                        $payment_status == 'paid'): 
+                                    ?>
+                                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(0,0,0,.08);">
+                                        <h5 style="margin: 0 0 12px; font-size: 14px; font-weight: 600; color: var(--text);">
+                                            <i class="bi bi-arrow-counterclockwise"></i> <?php __e('refund_title'); ?>
+                                        </h5>
+                                        
+                                        <?php if ($cancellation_request['refund_status'] == 'completed'): ?>
+                                            <!-- Refund completed -->
+                                            <div style="padding: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px;">
+                                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                                    <i class="bi bi-check-circle-fill" style="color: var(--ok); font-size: 18px;"></i>
+                                                    <strong style="color: var(--ok);"><?php __e('refund_completed'); ?></strong>
+                                                </div>
+                                                <?php if ($cancellation_request['refund_date']): ?>
+                                                <div style="font-size: 12px; color: var(--muted);">
+                                                    <?php __e('refund_date'); ?>: <?php echo date('M d, Y H:i', strtotime($cancellation_request['refund_date'])); ?>
+                                                </div>
+                                                <?php endif; ?>
+                                                <?php if ($cancellation_request['refund_transaction_id']): ?>
+                                                <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
+                                                    <?php __e('refund_transaction_id'); ?>: <?php echo htmlspecialchars($cancellation_request['refund_transaction_id']); ?>
+                                                </div>
+                                                <?php endif; ?>
+                                            </div>
+                                        <?php elseif ($cancellation_request['refund_status'] == 'pending'): ?>
+                                            <!-- Refund pending - show PayPal account form -->
+                                            <?php if (empty($cancellation_request['customer_paypal_account'])): ?>
+                                                <div style="padding: 12px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; margin-bottom: 12px;">
+                                                    <p style="margin: 0 0 8px; font-size: 13px; color: var(--warn);">
+                                                        <?php __e('refund_paypal_required'); ?>
+                                                    </p>
+                                                    <form id="paypalAccountForm_<?php echo $cancellation_request['cancellation_id']; ?>" onsubmit="submitPayPalAccount(event, <?php echo $cancellation_request['cancellation_id']; ?>)">
+                                                        <div style="display: flex; gap: 8px;">
+                                                            <input type="email" 
+                                                                   id="paypal_account_<?php echo $cancellation_request['cancellation_id']; ?>"
+                                                                   placeholder="<?php __e('refund_paypal_placeholder'); ?>" 
+                                                                   required
+                                                                   style="flex: 1; padding: 10px; border: 2px solid rgba(0,0,0,.12); border-radius: 8px; font-size: 14px;">
+                                                            <button type="submit" class="btn btn-primary" style="padding: 10px 20px; white-space: nowrap;">
+                                                                <i class="bi bi-send"></i> <?php __e('refund_submit_paypal'); ?>
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            <?php else: ?>
+                                                <!-- PayPal account provided, waiting for refund -->
+                                                <div style="padding: 12px; background: rgba(37, 99, 235, 0.1); border: 1px solid rgba(37, 99, 235, 0.3); border-radius: 8px;">
+                                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                                        <i class="bi bi-clock-history" style="color: var(--brand); font-size: 18px;"></i>
+                                                        <strong style="color: var(--brand);"><?php __e('refund_pending'); ?></strong>
+                                                    </div>
+                                                    <div style="font-size: 13px; color: var(--muted);">
+                                                        <?php __e('refund_paypal_provided'); ?>: <strong><?php echo htmlspecialchars($cancellation_request['customer_paypal_account']); ?></strong>
+                                                    </div>
+                                                    <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
+                                                        <?php __e('refund_waiting_admin'); ?>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
+                                        <?php endif; ?>
+                                        
+                                        <?php if ($cancellation_request['refund_amount']): ?>
+                                        <div style="margin-top: 8px; font-size: 13px; color: var(--muted);">
+                                            <strong><?php __e('refund_amount'); ?>:</strong> SAR<?php echo number_format(floatval($cancellation_request['refund_amount']), 2); ?>
+                                        </div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+
+                            <!-- Rating Section -->
+                            <?php
+                            $current_rating = isset($row['rating']) ? intval($row['rating']) : null;
+                            $rating_comment = isset($row['rating_comment']) ? htmlspecialchars($row['rating_comment']) : '';
+                            $rating_date = isset($row['rating_date']) ? $row['rating_date'] : null;
+                            // Allow rating for all orders, not just delivered ones
+                            ?>
+                            <div id="rating" class="rating-section" style="margin-top: 30px; padding-top: 30px; border-top: 1px solid rgba(0,0,0,.08); scroll-margin-top: 20px;">
+                                <h3 style="margin: 0 0 16px; font-size: 18px; font-weight: 600;"><?php __e('rating_title'); ?></h3>
+                                <p style="margin: 0 0 20px; color: var(--muted); font-size: 14px;"><?php __e('rating_subtitle'); ?></p>
+                                
+                                <?php if ($current_rating): ?>
+                                    <!-- Show existing rating -->
+                                    <div class="rating-display" style="background: var(--panel); padding: 20px; border-radius: 12px; border: 1px solid rgba(0,0,0,.08);">
+                                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                            <div class="rating-stars-display" style="display: flex; gap: 4px;">
+                                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                    <span style="font-size: 24px; color: <?php echo $i <= $current_rating ? '#fbbf24' : '#d1d5db'; ?>;">★</span>
+                                                <?php endfor; ?>
+                                            </div>
+                                            <span style="font-weight: 600; color: var(--text);"><?php echo $current_rating; ?>/5 <?php __e('rating_stars'); ?></span>
+                                        </div>
+                                        <?php if ($rating_comment): ?>
+                                            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,.08);">
+                                                <div style="font-size: 13px; color: var(--muted); margin-bottom: 4px;"><?php __e('rating_comment'); ?>:</div>
+                                                <div style="color: var(--text);"><?php echo $rating_comment; ?></div>
+                                            </div>
+                                        <?php endif; ?>
+                                        <?php if ($rating_date): ?>
+                                            <div style="margin-top: 8px; font-size: 12px; color: var(--muted);">
+                                                <?php __e('rating_date'); ?>: <?php echo date('M d, Y H:i', strtotime($rating_date)); ?>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php else: ?>
+                                    <!-- Show rating form for all orders -->
+                                    <div class="rating-form-container" id="ratingFormContainer" style="background: white; padding: 24px; border-radius: 12px; border: 2px solid rgba(37, 99, 235, 0.2); box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+                                        <div style="margin-bottom: 20px; text-align: center;">
+                                            <div style="font-size: 32px; margin-bottom: 8px;">⭐</div>
+                                            <div style="font-weight: 600; color: var(--text); font-size: 16px; margin-bottom: 4px;">
+                                                <?php __e('rating_subtitle'); ?>
+                                            </div>
+                                            <div style="color: var(--muted); font-size: 13px;">
+                                                <?php __e('rating_comment_placeholder'); ?>
+                                            </div>
+                                        </div>
+                                        
+                                        <form id="ratingForm">
+                                            <div style="margin-bottom: 24px;">
+                                                <label class="form-label" style="display: block; font-weight: 600; margin-bottom: 12px; text-align: center;">
+                                                    <?php __e('rating_required'); ?> <span style="color: var(--danger);">*</span>
+                                                </label>
+                                                <div class="rating-input" style="display: flex; gap: 12px; justify-content: center; margin-top: 12px; flex-wrap: wrap;">
+                                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                        <button type="button" class="rating-star-btn" data-rating="<?php echo $i; ?>" style="background: none; border: none; font-size: 48px; color: #d1d5db; cursor: pointer; padding: 4px; transition: all 0.2s; line-height: 1;" onmouseover="highlightStars(<?php echo $i; ?>)" onmouseout="resetStars()" onclick="selectRating(<?php echo $i; ?>)" title="<?php echo $i; ?> <?php echo $i == 1 ? 'star' : 'stars'; ?>">
+                                                            ★
+                                                        </button>
+                                                    <?php endfor; ?>
+                                                </div>
+                                                <input type="hidden" name="rating" id="ratingValue" required>
+                                                <div id="ratingError" style="color: var(--danger); font-size: 12px; margin-top: 12px; text-align: center; display: none;"></div>
+                                                <div id="ratingSelected" style="text-align: center; margin-top: 8px; font-size: 14px; color: var(--muted); display: none;">
+                                                    <span id="selectedRatingText"></span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div style="margin-bottom: 24px;">
+                                                <label for="rating_comment" class="form-label" style="display: block; font-weight: 600; margin-bottom: 8px;">
+                                                    <i class="bi bi-chat-left-text"></i> <?php __e('rating_comment_label'); ?>
+                                                </label>
+                                                <textarea name="rating_comment" id="rating_comment" class="form-control" rows="5" placeholder="<?php __e('rating_comment_placeholder'); ?>" style="resize: vertical; width: 100%; padding: 12px; border: 2px solid rgba(0,0,0,.12); border-radius: 8px; font-family: inherit; font-size: 14px; transition: border-color 0.2s;"></textarea>
+                                                <div style="font-size: 12px; color: var(--muted); margin-top: 6px;">
+                                                    <?php __e('rating_comment_placeholder'); ?>
+                                                </div>
+                                            </div>
+                                            
+                                            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 16px; font-weight: 600; background: linear-gradient(135deg, var(--brand), var(--brand-2)); border: none; border-radius: 10px; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                                <i class="bi bi-star-fill"></i> <?php __e('rating_submit'); ?>
+                                            </button>
+                                        </form>
                                     </div>
                                 <?php endif; ?>
                             </div>
@@ -884,6 +1156,24 @@ $is_rtl = is_rtl();
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
+        // Auto-scroll to rating section if URL has #rating anchor
+        window.addEventListener('DOMContentLoaded', function() {
+            if (window.location.hash === '#rating') {
+                setTimeout(function() {
+                    const ratingSection = document.getElementById('rating');
+                    if (ratingSection) {
+                        ratingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        // Highlight the section briefly
+                        ratingSection.style.transition = 'background-color 0.3s';
+                        ratingSection.style.backgroundColor = 'rgba(251, 191, 36, 0.1)';
+                        setTimeout(function() {
+                            ratingSection.style.backgroundColor = '';
+                        }, 2000);
+                    }
+                }, 300);
+            }
+        });
+        
         function downloadQRCode(qrPath, trackingCode) {
             const link = document.createElement('a');
             link.href = qrPath;
@@ -1000,17 +1290,229 @@ $is_rtl = is_rtl();
                 alert("<?php __e('profile_update_error'); ?>");
             }
         }
-    </script>
-</body>
 
-</html>
-
-                console.error(`Error updating data: ${error}`);
-                alert("<?php __e('profile_update_error'); ?>");
+        // Cancellation request functionality
+        function showCancellationForm(request_id) {
+            const modal = document.getElementById('cancellationModal_' + request_id);
+            if (modal) {
+                modal.style.display = 'flex';
             }
+        }
+        
+        function hideCancellationForm(request_id) {
+            const modal = document.getElementById('cancellationModal_' + request_id);
+            if (modal) {
+                modal.style.display = 'none';
+                // Clear form
+                const form = document.getElementById('cancellationForm_' + request_id);
+                if (form) {
+                    form.reset();
+                }
+            }
+        }
+        
+        async function submitCancellationRequest(event, request_id) {
+            event.preventDefault();
+            
+            const reason = document.getElementById('cancellation_reason_' + request_id).value.trim();
+            
+            if (!reason) {
+                alert('<?php __e('cancellation_request_reason_required'); ?>');
+                return;
+            }
+            
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> <?php __e('admin_saving'); ?>...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('request_id', request_id);
+                formData.append('cancellation_reason', reason);
+                
+                const response = await fetch('server/api.php?function_code=requestCancellation', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('<?php __e('cancellation_request_submitted'); ?>');
+                    location.reload();
+                } else {
+                    alert(result.error || '<?php __e('cancellation_request_error'); ?>');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            } catch (error) {
+                console.error('Error submitting cancellation request:', error);
+                alert('<?php __e('cancellation_request_error'); ?>');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        }
+        
+        // PayPal account submission for refund
+        async function submitPayPalAccount(event, cancellation_id) {
+            event.preventDefault();
+            
+            const paypalAccount = document.getElementById('paypal_account_' + cancellation_id).value.trim();
+            
+            if (!paypalAccount) {
+                alert('<?php __e('refund_paypal_required'); ?>');
+                return;
+            }
+            
+            // Basic email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(paypalAccount)) {
+                alert('<?php __e('refund_paypal_invalid'); ?>');
+                return;
+            }
+            
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> <?php __e('admin_saving'); ?>...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('cancellation_id', cancellation_id);
+                formData.append('paypal_account', paypalAccount);
+                
+                const response = await fetch('server/api.php?function_code=updateCustomerPayPalAccount', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('<?php __e('refund_paypal_submitted'); ?>');
+                    location.reload();
+                } else {
+                    alert(result.error || '<?php __e('refund_paypal_error'); ?>');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            } catch (error) {
+                console.error('Error submitting PayPal account:', error);
+                alert('<?php __e('refund_paypal_error'); ?>');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        }
+        
+        // Rating functionality
+        let selectedRating = 0;
+        const starButtons = document.querySelectorAll('.rating-star-btn');
+        
+        function highlightStars(rating) {
+            starButtons.forEach((btn, index) => {
+                if (index < rating) {
+                    btn.style.color = '#fbbf24';
+                } else {
+                    btn.style.color = '#d1d5db';
+                }
+            });
+        }
+        
+        function resetStars() {
+            starButtons.forEach((btn, index) => {
+                if (index < selectedRating) {
+                    btn.style.color = '#fbbf24';
+                } else {
+                    btn.style.color = '#d1d5db';
+                }
+            });
+        }
+        
+        function selectRating(rating) {
+            selectedRating = rating;
+            document.getElementById('ratingValue').value = rating;
+            starButtons.forEach((btn, index) => {
+                if (index < rating) {
+                    btn.style.color = '#fbbf24';
+                    btn.style.transform = 'scale(1.1)';
+                } else {
+                    btn.style.color = '#d1d5db';
+                    btn.style.transform = 'scale(1)';
+                }
+            });
+            document.getElementById('ratingError').style.display = 'none';
+            
+            // Show selected rating text
+            const ratingTexts = {
+                1: 'Poor',
+                2: 'Fair',
+                3: 'Good',
+                4: 'Very Good',
+                5: 'Excellent'
+            };
+            const selectedText = document.getElementById('selectedRatingText');
+            const ratingSelected = document.getElementById('ratingSelected');
+            if (selectedText && ratingSelected) {
+                selectedText.textContent = rating + '/5 - ' + ratingTexts[rating];
+                ratingSelected.style.display = 'block';
+            }
+        }
+        
+        
+        // Handle rating form submission
+        const ratingForm = document.getElementById('ratingForm');
+        if (ratingForm) {
+            ratingForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const rating = document.getElementById('ratingValue').value;
+                const comment = document.getElementById('rating_comment').value;
+                const requestId = <?php echo isset($request_id) ? $request_id : 0; ?>;
+                
+                if (!rating || rating < 1 || rating > 5) {
+                    document.getElementById('ratingError').textContent = '<?php __e('rating_required'); ?>';
+                    document.getElementById('ratingError').style.display = 'block';
+                    return;
+                }
+                
+                const submitBtn = ratingForm.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> <?php __e('admin_saving'); ?>...';
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('request_id', requestId);
+                    formData.append('rating', rating);
+                    if (comment) {
+                        formData.append('rating_comment', comment);
+                    }
+                    
+                    const response = await fetch('server/api.php?function_code=saveOrderRating', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        alert('<?php __e('rating_saved'); ?>');
+                        location.reload();
+                    } else {
+                        alert(result.error || '<?php __e('rating_error'); ?>');
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }
+                } catch (error) {
+                    console.error('Error saving rating:', error);
+                    alert('<?php __e('rating_error'); ?>');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            });
         }
     </script>
 </body>
-
 
 </html>

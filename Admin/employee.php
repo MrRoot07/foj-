@@ -40,6 +40,22 @@ $is_rtl = is_rtl();
                                 </div>
                                 <?php endif; ?>
 
+                                <div class="search-container">
+                                    <div class="search-wrapper">
+                                        <i class="bi bi-search search-icon"></i>
+                                        <input type="text" 
+                                               id="employeeSearch" 
+                                               class="search-input" 
+                                               placeholder="<?php __e('admin_search_employees'); ?>">
+                                        <button type="button" class="search-clear" id="clearEmployeeSearch" style="display: none;">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </div>
+                                    <div class="search-results-info" id="employeeSearchResultsInfo" style="display: none;">
+                                        <span id="employeeResultsCount">0</span> <?php __e('admin_employees_found'); ?>
+                                    </div>
+                                </div>
+
                                 <div class="employees-list">
                                     <?php
                                     if ($_SESSION['admin'] != 'admin') {
@@ -59,10 +75,13 @@ $is_rtl = is_rtl();
                                         $branchRow = mysqli_fetch_assoc($getCat);
                                         $branch_name = $branchRow ? $branchRow['branch_name'] : 'N/A';
                                         ?>
-                                        <div class="employee-list-item">
+                                        <div class="employee-list-item"
+                                             data-name="<?php echo strtolower(htmlspecialchars($row['name'])); ?>"
+                                             data-email="<?php echo strtolower(htmlspecialchars($row['email'])); ?>"
+                                             data-phone="<?php echo htmlspecialchars($row['phone']); ?>"
+                                             data-branch="<?php echo strtolower(htmlspecialchars($branch_name)); ?>">
                                             <div class="employee-item-header">
                                                 <div class="employee-id-section">
-                                                    <span class="employee-id-badge">ID: <?php echo $emp_id; ?></span>
                                                     <?php if ($row['active'] == 1): ?>
                                                         <span class="badge-status active"><?php __e('admin_active'); ?></span>
                                                     <?php else: ?>
@@ -347,29 +366,119 @@ $is_rtl = is_rtl();
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
 
-        .employees-list {
+        .search-container {
+            margin-bottom: 20px;
+        }
+
+        .search-wrapper {
+            position: relative;
             display: flex;
-            flex-direction: column;
-            gap: 20px;
+            align-items: center;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            color: #6c757d;
+            font-size: 18px;
+            z-index: 1;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 45px 12px 45px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            background: #f8f9fa;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-clear {
+            position: absolute;
+            right: 12px;
+            background: transparent;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-clear:hover {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .search-results-info {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .employee-list-item.hidden {
+            display: none;
+        }
+
+        .employees-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 16px;
+            max-height: calc(100vh - 300px);
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .employees-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .employees-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .employees-list::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        .employees-list::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
         }
 
         .employee-list-item {
             background: #ffffff;
             border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-            transition: all 0.3s ease;
+            border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .employee-list-item:hover {
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
             border-color: #d0d0d0;
+            transform: translateY(-1px);
         }
 
         .employee-item-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 14px 20px;
+            padding: 10px 14px;
         }
 
         .employee-id-section {
@@ -381,20 +490,20 @@ $is_rtl = is_rtl();
         .employee-id-badge {
             background: rgba(255, 255, 255, 0.2);
             color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 11px;
             font-weight: 600;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         .badge-status {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 10px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         .badge-status.active {
@@ -410,13 +519,14 @@ $is_rtl = is_rtl();
         }
 
         .employee-item-body {
-            padding: 20px;
+            padding: 12px 14px;
+            flex: 1;
         }
 
         .employee-fields-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px 12px;
         }
 
         .employee-field {
@@ -429,20 +539,20 @@ $is_rtl = is_rtl();
         }
 
         .employee-field label {
-            font-size: 12px;
+            font-size: 10px;
             font-weight: 600;
             color: #495057;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         .editable-input {
             width: 100%;
-            padding: 10px 14px;
+            padding: 8px 10px;
             border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 14px;
+            border-radius: 6px;
+            font-size: 12px;
             transition: all 0.2s ease;
             background: #f8f9fa;
         }
@@ -460,7 +570,7 @@ $is_rtl = is_rtl();
         }
 
         .employee-item-footer {
-            padding: 16px 20px;
+            padding: 10px 14px;
             background: #f8f9fa;
             border-top: 1px solid #e9ecef;
             display: flex;
@@ -609,7 +719,18 @@ $is_rtl = is_rtl();
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
 
+        @media (max-width: 1200px) {
+            .employees-list {
+                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            }
+        }
+
         @media (max-width: 768px) {
+            .employees-list {
+                grid-template-columns: 1fr;
+                max-height: none;
+            }
+
             .employee-fields-grid {
                 grid-template-columns: 1fr;
             }
@@ -628,6 +749,61 @@ $is_rtl = is_rtl();
     <script src="assets/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/main.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const searchInput = $('#employeeSearch');
+            const clearButton = $('#clearEmployeeSearch');
+            const resultsInfo = $('#employeeSearchResultsInfo');
+            const resultsCount = $('#employeeResultsCount');
+            const employeeItems = $('.employee-list-item');
+
+            searchInput.on('input', function() {
+                if ($(this).val().length > 0) {
+                    clearButton.show();
+                } else {
+                    clearButton.hide();
+                    resultsInfo.hide();
+                }
+            });
+
+            clearButton.on('click', function() {
+                searchInput.val('');
+                $(this).hide();
+                resultsInfo.hide();
+                filterEmployees('');
+            });
+
+            searchInput.on('input', function() {
+                const searchTerm = $(this).val().toLowerCase().trim();
+                filterEmployees(searchTerm);
+            });
+
+            function filterEmployees(searchTerm) {
+                let visibleCount = 0;
+                if (searchTerm === '') {
+                    employeeItems.removeClass('hidden');
+                    resultsInfo.hide();
+                    return;
+                }
+                employeeItems.each(function() {
+                    const $item = $(this);
+                    const name = $item.data('name') || '';
+                    const email = $item.data('email') || '';
+                    const phone = $item.data('phone') || '';
+                    const branch = $item.data('branch') || '';
+                    const searchableText = (name + ' ' + email + ' ' + phone + ' ' + branch).toLowerCase();
+                    if (searchableText.includes(searchTerm)) {
+                        $item.removeClass('hidden');
+                        visibleCount++;
+                    } else {
+                        $item.addClass('hidden');
+                    }
+                });
+                resultsCount.text(visibleCount);
+                resultsInfo.show();
+            }
+        });
+    </script>
 </body>
 
 </html>

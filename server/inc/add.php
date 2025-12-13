@@ -170,3 +170,62 @@ function createCustomer($data)
 	$sql = "INSERT INTO customer(name, email, phone, nic, address, gender, password, is_deleted) VALUES('$name', '$email', '$phone', '$nic', '$address', '$gender', '$password', 0 )";
 	return mysqli_query($con, $sql);
 }
+
+function addCancellationRequest($data)
+{
+	include 'connection.php';
+
+	$request_id = intval($data['request_id']);
+	$customer_id = intval($data['customer_id']);
+	$cancellation_reason = mysqli_real_escape_string($con, $data['cancellation_reason']);
+
+	// Check if there's already a pending cancellation request for this order
+	$check_sql = "SELECT cancellation_id FROM cancellation_requests WHERE request_id = '$request_id' AND cancellation_status = 'pending'";
+	$check_result = mysqli_query($con, $check_sql);
+	
+	if (mysqli_num_rows($check_result) > 0) {
+		return false; // Already has a pending request
+	}
+
+	$sql = "INSERT INTO cancellation_requests(request_id, customer_id, cancellation_reason, cancellation_status, requested_date) 
+			VALUES('$request_id', '$customer_id', '$cancellation_reason', 'pending', NOW())";
+	
+	if (mysqli_query($con, $sql)) {
+		return mysqli_insert_id($con);
+	}
+	return false;
+}
+
+function updateCustomerPayPalAccount($cancellation_id, $paypal_account)
+{
+	include 'connection.php';
+	
+	$cancellation_id = intval($cancellation_id);
+	$paypal_account = mysqli_real_escape_string($con, trim($paypal_account));
+	
+	if (empty($paypal_account)) {
+		return false;
+	}
+	
+	$sql = "UPDATE cancellation_requests 
+			SET customer_paypal_account = '$paypal_account' 
+			WHERE cancellation_id = '$cancellation_id'";
+	
+	return mysqli_query($con, $sql);
+}
+
+function markRefundAsCompleted($cancellation_id, $refund_transaction_id)
+{
+	include 'connection.php';
+	
+	$cancellation_id = intval($cancellation_id);
+	$refund_transaction_id = mysqli_real_escape_string($con, trim($refund_transaction_id));
+	
+	$sql = "UPDATE cancellation_requests 
+			SET refund_status = 'completed', 
+				refund_date = NOW(),
+				refund_transaction_id = '$refund_transaction_id'
+			WHERE cancellation_id = '$cancellation_id'";
+	
+	return mysqli_query($con, $sql);
+}

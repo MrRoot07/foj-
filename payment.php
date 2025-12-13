@@ -30,6 +30,18 @@ if ($request['payment_method'] != 'paypal' || $request['payment_status'] != 'pen
     exit;
 }
 
+// Prevent payment if order is canceled
+if ($request['tracking_status'] == 12) {
+    header("Location: tracking.php?order_id=" . $request_id);
+    exit;
+}
+
+// Prevent payment if order is already paid
+if ($request['payment_status'] == 'paid') {
+    header("Location: tracking.php?order_id=" . $request_id);
+    exit;
+}
+
 $companyName = "FOJ Express";
 $amount = floatval($request['total_fee']);
 $paypal_client_id = 'ATF3NgqnXDgojMU7vjwdjYMENojiNMUdKDJb2npC8J6H0QThG8yfNUJUx8QTz9ILnf-7f57ys82pQssS';

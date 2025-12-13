@@ -35,18 +35,36 @@
                 </div>
             </div>
             <div class="page-content">
+                <div class="search-container">
+                    <div class="search-wrapper">
+                        <i class="bi bi-search search-icon"></i>
+                        <input type="text" 
+                               id="courierSearch" 
+                               class="search-input" 
+                               placeholder="<?php __e('admin_search_couriers'); ?>">
+                        <button type="button" class="search-clear" id="clearCourierSearch" style="display: none;">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                    <div class="search-results-info" id="courierSearchResultsInfo" style="display: none;">
+                        <span id="courierResultsCount">0</span> <?php __e('admin_couriers_found'); ?>
+                    </div>
+                </div>
                 <?php
                 $getall = getAllTracking();
 
                 while ($row = mysqli_fetch_assoc($getall)) {
                     $request_id = $row['request_id'];
                     ?>
-                    <article class="card mt-5" style="border: 2px solid #2c3e50">
+                    <article class="card mt-5 courier-item" 
+                             style="border: 2px solid #2c3e50"
+                             data-tracking="<?php echo strtolower(htmlspecialchars($row['tracking_code'])); ?>"
+                             data-customer="<?php echo strtolower(htmlspecialchars($row['name'] ?? '')); ?>"
+                             data-phone="<?php echo htmlspecialchars($row['phone'] ?? ''); ?>">
                         <header class="card-header text-white" style="background-color: #2c3e50; border-radius: 0px;">
                             Orders /
                             Tracking </header>
                         <div class="card-body mt-3">
-                            <h6>Traking ID: #<?php echo $row['request_id']; ?> </h6>
                             <article class="card">
                                 <div class="card-body row">
 
@@ -189,9 +207,130 @@
     <script src="assets/js/pages/dashboard.js"></script>
 
     <script src="assets/js/main.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const searchInput = $('#courierSearch');
+            const clearButton = $('#clearCourierSearch');
+            const resultsInfo = $('#courierSearchResultsInfo');
+            const resultsCount = $('#courierResultsCount');
+            const courierItems = $('.courier-item');
+
+            searchInput.on('input', function() {
+                if ($(this).val().length > 0) {
+                    clearButton.show();
+                } else {
+                    clearButton.hide();
+                    resultsInfo.hide();
+                }
+            });
+
+            clearButton.on('click', function() {
+                searchInput.val('');
+                $(this).hide();
+                resultsInfo.hide();
+                filterCouriers('');
+            });
+
+            searchInput.on('input', function() {
+                const searchTerm = $(this).val().toLowerCase().trim();
+                filterCouriers(searchTerm);
+            });
+
+            function filterCouriers(searchTerm) {
+                let visibleCount = 0;
+                if (searchTerm === '') {
+                    courierItems.removeClass('hidden');
+                    resultsInfo.hide();
+                    return;
+                }
+                courierItems.each(function() {
+                    const $item = $(this);
+                    const tracking = $item.data('tracking') || '';
+                    const customer = $item.data('customer') || '';
+                    const phone = $item.data('phone') || '';
+                    const searchableText = (tracking + ' ' + customer + ' ' + phone).toLowerCase();
+                    if (searchableText.includes(searchTerm)) {
+                        $item.removeClass('hidden');
+                        visibleCount++;
+                    } else {
+                        $item.addClass('hidden');
+                    }
+                });
+                resultsCount.text(visibleCount);
+                resultsInfo.show();
+            }
+        });
+    </script>
 </body>
 <style>
     @import url('https://fonts.googleapis.com/css?family=Open+Sans&display=swap');
+
+    .search-container {
+        margin-bottom: 20px;
+    }
+
+    .search-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 16px;
+        color: #6c757d;
+        font-size: 18px;
+        z-index: 1;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 12px 45px 12px 45px;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        font-size: 14px;
+        transition: all 0.2s ease;
+        background: #f8f9fa;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #667eea;
+        background: #ffffff;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .search-clear {
+        position: absolute;
+        right: 12px;
+        background: transparent;
+        border: none;
+        color: #6c757d;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .search-clear:hover {
+        background: #e9ecef;
+        color: #495057;
+    }
+
+    .search-results-info {
+        margin-top: 12px;
+        font-size: 13px;
+        color: #6c757d;
+        font-weight: 500;
+    }
+
+    .courier-item.hidden {
+        display: none;
+    }
 
     .card {
         position: relative;

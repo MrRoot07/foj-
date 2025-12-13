@@ -20,6 +20,22 @@ function updateDataTable($data)
     $id_fild = mysqli_real_escape_string($con, $id_fild);
     $id = mysqli_real_escape_string($con, $id);
 
+    // Prevent any updates to canceled orders (status 12)
+    if ($table === 'request' && $id_fild === 'request_id') {
+        $check_canceled = "SELECT tracking_status FROM request WHERE request_id = '$id'";
+        $canceled_result = mysqli_query($con, $check_canceled);
+        if ($canceled_result && mysqli_num_rows($canceled_result) > 0) {
+            $canceled_row = mysqli_fetch_assoc($canceled_result);
+            if (intval($canceled_row['tracking_status']) == 12) {
+                // Order is canceled - prevent all updates
+                header('Content-Type: application/json');
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'This order is canceled and cannot be modified.']);
+                exit;
+            }
+        }
+    }
+
     // If updating tracking_status in request table, record status change history
     if ($table === 'request' && $field === 'tracking_status' && $id_fild === 'request_id') {
         // Get current status before update
@@ -27,6 +43,13 @@ function updateDataTable($data)
         $current_result = mysqli_query($con, $current_query);
         $current_row = mysqli_fetch_assoc($current_result);
         $old_status = $current_row['tracking_status'] ?? null;
+        
+        // Prevent changing from canceled status
+        if (intval($old_status) == 12) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Canceled orders cannot be modified.']);
+            exit;
+        }
         
         // Validate status change - only allow sequential progression
         // Define status flow inline to avoid circular includes
@@ -234,6 +257,188 @@ function updatePassword($data)
     } else {
         echo json_encode(array('success' => false, 'error' => 'Failed to update password'));
     }
+}
+
+function saveOrderRating($data)
+{
+    include 'connection.php';
+    
+    $request_id = mysqli_real_escape_string($con, $data['request_id']);
+    $rating = intval($data['rating']);
+    $rating_comment = isset($data['rating_comment']) ? mysqli_real_escape_string($con, $data['rating_comment']) : null;
+    
+    // Validate rating (1-5)
+    if ($rating < 1 || $rating > 5) {
+        return json_encode(array('success' => false, 'error' => 'Rating must be between 1 and 5'));
+    }
+    
+    // Check if order exists and belongs to the customer (if customer_id is provided)
+    if (isset($data['customer_id'])) {
+        $customer_id = mysqli_real_escape_string($con, $data['customer_id']);
+        $check_query = "SELECT * FROM request WHERE request_id = '$request_id' AND customer_id = '$customer_id' AND is_deleted = 0";
+        $check_result = mysqli_query($con, $check_query);
+        
+        if (mysqli_num_rows($check_result) == 0) {
+            return json_encode(array('success' => false, 'error' => 'Order not found or access denied'));
+        }
+    }
+    
+    // Check if rating columns exist in the database, if not, add them automatically
+    $check_rating = "SHOW COLUMNS FROM request LIKE 'rating'";
+    $column_result = mysqli_query($con, $check_rating);
+    
+    if (mysqli_num_rows($column_result) == 0) {
+        // Columns don't exist - add them automatically
+        $add_rating = "ALTER TABLE `request` ADD COLUMN `rating` INT(1) DEFAULT NULL COMMENT 'Rating from 1 to 5'";
+        if (!mysqli_query($con, $add_rating)) {
+            return json_encode(array(
+                'success' => false, 
+                'error' => 'Failed to add rating column: ' . mysqli_error($con)
+            ));
+        }
+    }
+    
+    // Check and add rating_comment column
+    $check_comment = "SHOW COLUMNS FROM request LIKE 'rating_comment'";
+    $comment_result = mysqli_query($con, $check_comment);
+    if (mysqli_num_rows($comment_result) == 0) {
+        $add_comment = "ALTER TABLE `request` ADD COLUMN `rating_comment` TEXT DEFAULT NULL COMMENT 'Optional comment with rating'";
+        if (!mysqli_query($con, $add_comment)) {
+            return json_encode(array(
+                'success' => false, 
+                'error' => 'Failed to add rating_comment column: ' . mysqli_error($con)
+            ));
+        }
+    }
+    
+    // Check and add rating_date column
+    $check_date = "SHOW COLUMNS FROM request LIKE 'rating_date'";
+    $date_result = mysqli_query($con, $check_date);
+    if (mysqli_num_rows($date_result) == 0) {
+        $add_date = "ALTER TABLE `request` ADD COLUMN `rating_date` DATETIME DEFAULT NULL COMMENT 'Date when rating was submitted'";
+        if (!mysqli_query($con, $add_date)) {
+            return json_encode(array(
+                'success' => false, 
+                'error' => 'Failed to add rating_date column: ' . mysqli_error($con)
+            ));
+        }
+    }
+    
+    // Check and add index if it doesn't exist
+    $check_index = "SHOW INDEX FROM request WHERE Key_name = 'idx_rating'";
+    $index_result = mysqli_query($con, $check_index);
+    if (mysqli_num_rows($index_result) == 0) {
+        $add_index = "ALTER TABLE `request` ADD INDEX `idx_rating` (`rating`)";
+        mysqli_query($con, $add_index); // Don't fail if index creation fails
+    }
+    
+    // Update rating
+    if ($rating_comment) {
+        $sql = "UPDATE request SET rating = '$rating', rating_comment = '$rating_comment', rating_date = NOW() WHERE request_id = '$request_id'";
+    } else {
+        $sql = "UPDATE request SET rating = '$rating', rating_comment = NULL, rating_date = NOW() WHERE request_id = '$request_id'";
+    }
+    
+    $result = mysqli_query($con, $sql);
+    
+    if ($result) {
+        return json_encode(array('success' => true, 'message' => 'Rating saved successfully'));
+    } else {
+        // Get the actual MySQL error for debugging
+        $mysql_error = mysqli_error($con);
+        return json_encode(array(
+            'success' => false, 
+            'error' => 'Failed to save rating: ' . $mysql_error
+        ));
+    }
+}
+
+function updateCancellationRequestStatus($data)
+{
+    include 'connection.php';
+    
+    $cancellation_id = intval($data['cancellation_id']);
+    $status = mysqli_real_escape_string($con, $data['status']); // 'approved' or 'rejected'
+    $admin_response_comment = isset($data['admin_response_comment']) && !empty(trim($data['admin_response_comment'])) ? mysqli_real_escape_string($con, trim($data['admin_response_comment'])) : null;
+    $admin_id = isset($_SESSION['emp_id']) ? intval($_SESSION['emp_id']) : null;
+    
+    // Validate status
+    if (!in_array($status, ['approved', 'rejected'])) {
+        return json_encode(array('success' => false, 'error' => 'Invalid status'));
+    }
+    
+    // Get cancellation request details
+    $get_request = "SELECT * FROM cancellation_requests WHERE cancellation_id = '$cancellation_id'";
+    $request_result = mysqli_query($con, $get_request);
+    
+    if (!$request_result || mysqli_num_rows($request_result) == 0) {
+        return json_encode(array('success' => false, 'error' => 'Cancellation request not found'));
+    }
+    
+    $cancellation = mysqli_fetch_assoc($request_result);
+    $request_id = $cancellation['request_id'];
+    
+    // Check if already processed
+    if ($cancellation['cancellation_status'] != 'pending') {
+        return json_encode(array('success' => false, 'error' => 'Cancellation request already processed'));
+    }
+    
+    // Update cancellation request
+    if ($admin_response_comment) {
+        $update_sql = "UPDATE cancellation_requests 
+                      SET cancellation_status = '$status', 
+                          admin_response_date = NOW(), 
+                          admin_response_comment = '$admin_response_comment',
+                          admin_id = " . ($admin_id ? "'$admin_id'" : "NULL") . "
+                      WHERE cancellation_id = '$cancellation_id'";
+    } else {
+        $update_sql = "UPDATE cancellation_requests 
+                      SET cancellation_status = '$status', 
+                          admin_response_date = NOW(),
+                          admin_id = " . ($admin_id ? "'$admin_id'" : "NULL") . "
+                      WHERE cancellation_id = '$cancellation_id'";
+    }
+    
+    $update_result = mysqli_query($con, $update_sql);
+    
+    if (!$update_result) {
+        return json_encode(array('success' => false, 'error' => 'Failed to update cancellation request: ' . mysqli_error($con)));
+    }
+    
+    // If approved, update order status to canceled (12)
+    if ($status == 'approved') {
+        // Get order details to check payment status
+        $order_query = "SELECT payment_status, payment_method, total_fee FROM request WHERE request_id = '$request_id'";
+        $order_result = mysqli_query($con, $order_query);
+        $order_data = mysqli_fetch_assoc($order_result);
+        
+        // Update order status
+        $order_sql = "UPDATE request SET tracking_status = 12 WHERE request_id = '$request_id'";
+        $order_update_result = mysqli_query($con, $order_sql);
+        
+        if (!$order_update_result) {
+            return json_encode(array('success' => false, 'error' => 'Failed to update order status: ' . mysqli_error($con)));
+        }
+        
+        // Record status change in history
+        $history_sql = "INSERT INTO request_status_history (request_id, status, status_date) 
+                       VALUES ('$request_id', 12, NOW())
+                       ON DUPLICATE KEY UPDATE status_date = NOW()";
+        mysqli_query($con, $history_sql);
+        
+        // If payment was made via PayPal, set refund status to pending
+        if ($order_data && $order_data['payment_method'] == 'paypal' && $order_data['payment_status'] == 'paid') {
+            $refund_amount = floatval($order_data['total_fee']);
+            $refund_sql = "UPDATE cancellation_requests 
+                          SET refund_status = 'pending', 
+                              refund_amount = '$refund_amount'
+                          WHERE cancellation_id = '$cancellation_id'";
+            mysqli_query($con, $refund_sql);
+        }
+    }
+    // If rejected, order continues normally (no status change needed)
+    
+    return json_encode(array('success' => true, 'message' => 'Cancellation request ' . $status . ' successfully'));
 }
 
 ?>

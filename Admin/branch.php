@@ -38,6 +38,22 @@ $is_rtl = is_rtl();
                                     </button>
                                 </div>
 
+                                <div class="search-container">
+                                    <div class="search-wrapper">
+                                        <i class="bi bi-search search-icon"></i>
+                                        <input type="text" 
+                                               id="branchSearch" 
+                                               class="search-input" 
+                                               placeholder="<?php __e('admin_search_branches'); ?>">
+                                        <button type="button" class="search-clear" id="clearBranchSearch" style="display: none;">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </div>
+                                    <div class="search-results-info" id="branchSearchResultsInfo" style="display: none;">
+                                        <span id="branchResultsCount">0</span> <?php __e('admin_branches_found'); ?>
+                                    </div>
+                                </div>
+
                                 <div class="branches-list">
                                     <?php
                                     $getall = getAllBranch();
@@ -47,9 +63,9 @@ $is_rtl = is_rtl();
                                         $has_branches = true;
                                         $branch_id = $row['branch_id'];
                                         ?>
-                                        <div class="branch-item">
+                                        <div class="branch-item"
+                                             data-branch-name="<?php echo strtolower(htmlspecialchars($row['branch_name'])); ?>">
                                             <div class="branch-item-header">
-                                                <div class="branch-id-badge">ID: <?php echo $branch_id; ?></div>
                                             </div>
 
                                             <div class="branch-item-body">
@@ -162,29 +178,119 @@ $is_rtl = is_rtl();
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
 
-        .branches-list {
+        .search-container {
+            margin-bottom: 20px;
+        }
+
+        .search-wrapper {
+            position: relative;
             display: flex;
-            flex-direction: column;
-            gap: 20px;
+            align-items: center;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            color: #6c757d;
+            font-size: 18px;
+            z-index: 1;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 45px 12px 45px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            background: #f8f9fa;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-clear {
+            position: absolute;
+            right: 12px;
+            background: transparent;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-clear:hover {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .search-results-info {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .branch-item.hidden {
+            display: none;
+        }
+
+        .branches-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+            max-height: calc(100vh - 300px);
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .branches-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .branches-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .branches-list::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        .branches-list::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
         }
 
         .branch-item {
             background: #ffffff;
             border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-            transition: all 0.3s ease;
+            border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .branch-item:hover {
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
             border-color: #d0d0d0;
+            transform: translateY(-1px);
         }
 
         .branch-item-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 14px 20px;
+            padding: 10px 14px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -193,37 +299,38 @@ $is_rtl = is_rtl();
         .branch-id-badge {
             background: rgba(255, 255, 255, 0.2);
             color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 11px;
             font-weight: 600;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         .branch-item-body {
-            padding: 24px;
+            padding: 12px 14px;
+            flex: 1;
         }
 
         .branch-field {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
 
         .branch-field label {
-            font-size: 12px;
+            font-size: 10px;
             font-weight: 600;
             color: #495057;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         .editable-input {
             width: 100%;
-            padding: 12px 14px;
+            padding: 8px 10px;
             border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 15px;
+            border-radius: 6px;
+            font-size: 13px;
             transition: all 0.2s ease;
             background: #f8f9fa;
         }
@@ -241,11 +348,24 @@ $is_rtl = is_rtl();
         }
 
         .branch-item-footer {
-            padding: 16px 20px;
+            padding: 10px 14px;
             background: #f8f9fa;
             border-top: 1px solid #e9ecef;
             display: flex;
             justify-content: flex-end;
+        }
+
+        @media (max-width: 1200px) {
+            .branches-list {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .branches-list {
+                grid-template-columns: 1fr;
+                max-height: none;
+            }
         }
 
         .btn-delete {
@@ -392,6 +512,57 @@ $is_rtl = is_rtl();
     <script src="assets/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/main.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const searchInput = $('#branchSearch');
+            const clearButton = $('#clearBranchSearch');
+            const resultsInfo = $('#branchSearchResultsInfo');
+            const resultsCount = $('#branchResultsCount');
+            const branchItems = $('.branch-item');
+
+            searchInput.on('input', function() {
+                if ($(this).val().length > 0) {
+                    clearButton.show();
+                } else {
+                    clearButton.hide();
+                    resultsInfo.hide();
+                }
+            });
+
+            clearButton.on('click', function() {
+                searchInput.val('');
+                $(this).hide();
+                resultsInfo.hide();
+                filterBranches('');
+            });
+
+            searchInput.on('input', function() {
+                const searchTerm = $(this).val().toLowerCase().trim();
+                filterBranches(searchTerm);
+            });
+
+            function filterBranches(searchTerm) {
+                let visibleCount = 0;
+                if (searchTerm === '') {
+                    branchItems.removeClass('hidden');
+                    resultsInfo.hide();
+                    return;
+                }
+                branchItems.each(function() {
+                    const $item = $(this);
+                    const branchName = $item.data('branch-name') || '';
+                    if (branchName.includes(searchTerm)) {
+                        $item.removeClass('hidden');
+                        visibleCount++;
+                    } else {
+                        $item.addClass('hidden');
+                    }
+                });
+                resultsCount.text(visibleCount);
+                resultsInfo.show();
+            }
+        });
+    </script>
 </body>
 
 </html>
