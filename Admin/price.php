@@ -175,10 +175,11 @@ $is_rtl = is_rtl();
                                                         <input type="number" 
                                                                id="price_<?php echo $price_id; ?>"
                                                                class="form-control price-input manual-price" 
-                                                               value="<?php echo $row['price']; ?>"
+                                                               value="<?php echo number_format(floatval($row['price']), 2, '.', ''); ?>"
                                                                onchange="updateData(this, '<?php echo $price_id; ?>', 'price', 'price_table', 'price_id')"
                                                                min="0"
-                                                               step="0.01">
+                                                               step="0.01"
+                                                               pattern="[0-9]+(\.[0-9]{1,2})?">
                                                     </div>
                                                     <small style="color: #6c757d; font-size: 11px; margin-top: 4px; display: block;">
                                                         <i class="bi bi-pencil"></i> <?php __e('admin_manual_override'); ?>

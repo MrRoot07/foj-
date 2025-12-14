@@ -97,6 +97,12 @@ function updateDataTable($data)
         }
     }
 
+    // Ensure price values are properly formatted as decimals for price_table
+    if ($table === 'price_table' && $field === 'price') {
+        $value = floatval($value);
+        $value = number_format($value, 2, '.', '');
+    }
+
     $sql = "UPDATE $table SET $field = '$value' where $id_fild = '$id'";
     $result = mysqli_query($con, $sql);
     

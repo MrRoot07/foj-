@@ -22,6 +22,8 @@ $is_rtl = is_rtl();
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome for status icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <?php if ($is_rtl): ?>
     <link rel="stylesheet" href="css/rtl.css">
     <?php endif; ?>
@@ -714,18 +716,18 @@ $is_rtl = is_rtl();
                                 ];
                             }
                             
-                            // Define default statuses with their details
+                            // Define default statuses with their details (matching Admin/order_detail.php)
                             $default_statuses_def = [
                                 1 => ['icon' => 'fa-shopping-cart', 'text' => __t('tracking_status_placed')],
                                 2 => ['icon' => 'fa-box', 'text' => __t('tracking_status_preparing')],
                                 3 => ['icon' => 'fa-hand-holding-box', 'text' => __t('tracking_status_dropoff')],
                                 4 => ['icon' => 'fa-truck-pickup', 'text' => __t('tracking_status_picked')],
-                                5 => ['icon' => 'fa-warehouse', 'text' => __t('tracking_status_sorting_arrived')],
-                                6 => ['icon' => 'fa-truck', 'text' => __t('tracking_status_sorting_departed')],
-                                7 => ['icon' => 'fa-building', 'text' => __t('tracking_status_hub_arrived')],
+                                5 => ['icon' => 'fa-warehouse', 'text' => __t('tracking_status_sorting')],
+                                6 => ['icon' => 'fa-truck', 'text' => __t('tracking_status_departed')],
+                                7 => ['icon' => 'fa-building', 'text' => __t('tracking_status_hub')],
                                 8 => ['icon' => 'fa-truck-fast', 'text' => __t('tracking_status_out_delivery')],
-                                9 => ['icon' => 'fa-exclamation-triangle', 'text' => __t('tracking_status_delivery_failed')],
-                                10 => ['icon' => 'fa-store', 'text' => __t('tracking_status_ready_collection')],
+                                9 => ['icon' => 'fa-exclamation-triangle', 'text' => __t('tracking_status_unsuccessful')],
+                                10 => ['icon' => 'fa-store', 'text' => __t('tracking_status_collection')],
                                 11 => ['icon' => 'fa-circle-check', 'text' => __t('tracking_status_delivered')],
                                 12 => ['icon' => 'fa-times-circle', 'text' => __t('tracking_status_canceled')],
                             ];

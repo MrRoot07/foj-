@@ -40,7 +40,8 @@ function addPrice($data)
 
 	$start_area = $data['start_area'];
 	$end_area = $data['end_area'];
-	$price = $data['price'];
+	$price = floatval($data['price']); // Ensure it's a float
+	$price = number_format($price, 2, '.', ''); // Format to 2 decimal places
 
 	$count = checkPrice($start_area, $end_area);
 
