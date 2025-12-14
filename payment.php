@@ -249,8 +249,6 @@ $paypal_client_id = 'ATF3NgqnXDgojMU7vjwdjYMENojiNMUdKDJb2npC8J6H0QThG8yfNUJUx8Q
         </div>
     </main>
 
-    <?php include 'pages/footer.php'; ?>
-
     <script src="https://www.paypal.com/sdk/js?client-id=<?= $paypal_client_id; ?>&currency=USD"></script>
     <script>
         const requestId = <?= $request_id; ?>;

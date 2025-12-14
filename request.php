@@ -292,13 +292,6 @@ $is_rtl = is_rtl();
             font-size: 14px;
             margin-top: 12px
         }
-
-        /* Footer */
-        footer {
-            border-top: 1px solid rgba(0, 0, 0, .08);
-            padding: 28px 0;
-            color: var(--muted)
-        }
     </style>
 
 </head>
@@ -389,8 +382,6 @@ $is_rtl = is_rtl();
             </form>
         </div>
     </main>
-
-    <?php include 'pages/footer.php'; ?>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>

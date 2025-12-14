@@ -427,8 +427,6 @@ $is_rtl = is_rtl();
             </div>
         </div>
     </main>
-
-    <?php include 'pages/footer.php'; ?>
     
     <!-- QR Code Scanner -->
     <script src="https://unpkg.com/html5-qrcode"></script>

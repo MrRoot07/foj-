@@ -479,8 +479,6 @@ $customer_id = $row['customer_id'];
         </div>
     </main>
 
-    <?php include 'pages/footer.php'; ?>
-
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         function updateProfileField(element, field) {
