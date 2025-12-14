@@ -27,6 +27,7 @@ $is_rtl = is_rtl();
     <?php endif; ?>
 
     <style>
+        /* Same design tokens as the request page (light theme) */
         :root {
             --bg: #ffffff;
             --panel: #f7f9fc;
@@ -37,9 +38,15 @@ $is_rtl = is_rtl();
             --ok: #10b981;
             --warn: #f59e0b;
             --danger: #ef4444;
+            --ring: 0 0 0 3px rgba(37, 99, 235, .25);
             --radius: 14px;
             --shadow: 0 8px 24px rgba(0, 0, 0, .12), 0 2px 8px rgba(0, 0, 0, .08);
+            --shadow-soft: 0 6px 18px rgba(0, 0, 0, .08), inset 0 1px 0 rgba(255, 255, 255, .6);
             --grid-max: 1200px;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         html,
@@ -64,8 +71,8 @@ $is_rtl = is_rtl();
 
         .page-header {
             padding: 24px 0;
-            border-bottom: 1px solid rgba(0, 0, 0, .06);
-            margin-bottom: 10px
+            border-bottom: 1px solid rgba(0, 0, 0, .08);
+            margin-bottom: 20px;
         }
 
         .page-header h1 {
@@ -74,16 +81,19 @@ $is_rtl = is_rtl();
         }
 
         main {
-            padding: 24px 0
+            padding: 40px 0;
+            min-height: calc(100vh - 64px);
         }
 
         .tracking-card {
+            width: 100%;
+            max-width: 1200px;
             background: var(--panel);
             border: 1px solid rgba(0, 0, 0, .08);
-            border-radius: 12px;
-            padding: 24px;
+            border-radius: 18px;
+            box-shadow: var(--shadow-soft);
+            padding: 32px;
             margin-bottom: 24px;
-            box-shadow: var(--shadow);
         }
 
         .tracking-header {
@@ -152,9 +162,14 @@ $is_rtl = is_rtl();
 
         .info-section {
             background: white;
-            border: 1px solid rgba(0, 0, 0, .06);
-            border-radius: 10px;
-            padding: 16px;
+            border: 1px solid rgba(0, 0, 0, .08);
+            border-radius: 12px;
+            padding: 20px;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .info-section:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
         }
 
         .info-section-title {
@@ -258,10 +273,10 @@ $is_rtl = is_rtl();
         .vertical-timeline-container {
             margin: 30px 0;
             padding: 24px;
-            background: var(--panel);
+            background: white;
             border: 1px solid rgba(0, 0, 0, .08);
             border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+            box-shadow: var(--shadow-soft);
         }
 
         .timeline-title {
@@ -439,8 +454,8 @@ $is_rtl = is_rtl();
 
         .form-control:focus {
             outline: none;
-            border-color: var(--brand);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, .1);
+            border-color: transparent;
+            box-shadow: var(--ring);
         }
 
         .form-label {
@@ -496,8 +511,8 @@ $is_rtl = is_rtl();
         </div>
     </div>
 
-    <main>
-        <div class="container-ex">
+    <main style="display: flex; justify-content: center; align-items: flex-start; padding: 40px 0;">
+        <div class="container-ex" style="width: 100%; max-width: 1200px;">
             <div style="margin-bottom: 20px;">
                 <a href="orders.php" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 8px;">
                     <i class="bi bi-arrow-left"></i> <?php __e('tracking_back_orders'); ?>
@@ -547,7 +562,7 @@ $is_rtl = is_rtl();
                         $locationRow = mysqli_fetch_assoc($getLocation);
                         $end_location = $locationRow['area_name'];
                         ?>
-                        <div class="tracking-card">
+                        <div class="tracking-card" style="margin: 0 auto;">
                             <div class="tracking-header">
                                 <div class="tracking-title">
                                     <div class="tracking-code-text" style="font-size: 18px; font-weight: 700; color: var(--brand); margin-bottom: 4px;">
@@ -1168,7 +1183,6 @@ $is_rtl = is_rtl();
         </div>
     </main>
 
-    <?php include 'pages/footer.php'; ?>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
