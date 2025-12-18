@@ -24,30 +24,60 @@ $is_rtl = is_rtl();
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
-        // Check session on page load and when navigating back (pageshow event)
-        function checkSession() {
-            if (typeof XMLHttpRequest !== 'undefined') {
-                var xhr = new XMLHttpRequest();
-                xhr.open('GET', 'server/api.php?function_code=checkSession&_=' + new Date().getTime(), false);
-                xhr.send();
-                try {
-                    var response = JSON.parse(xhr.responseText);
-                    if (!response.authenticated) {
+        (function() {
+            // Check session on page load and when navigating back (pageshow event)
+            function checkSession() {
+                if (typeof XMLHttpRequest !== 'undefined') {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', 'server/api.php?function_code=checkSession&_=' + new Date().getTime(), false);
+                    xhr.send();
+                    try {
+                        var response = JSON.parse(xhr.responseText);
+                        if (!response.authenticated) {
+                            window.location.replace('login.php');
+                            return false;
+                        }
+                    } catch(e) {
                         window.location.replace('login.php');
+                        return false;
                     }
-                } catch(e) {
-                    window.location.replace('login.php');
                 }
+                return true;
             }
-        }
-        // Check immediately
-        checkSession();
-        // Check when page is shown (including from cache/back button)
-        window.addEventListener('pageshow', function(event) {
-            if (event.persisted) { // Page was loaded from cache
+            
+            // Prevent back navigation by replacing history
+            if (window.history && window.history.pushState) {
+                window.history.pushState(null, null, window.location.href);
+                window.addEventListener('popstate', function(event) {
+                    window.history.pushState(null, null, window.location.href);
+                    checkSession();
+                });
+            }
+            
+            // Check immediately on page load (before DOM is ready)
+            if (!checkSession()) {
+                return; // Stop execution if not authenticated
+            }
+            
+            // Check when page is shown (including from cache/back button)
+            window.addEventListener('pageshow', function(event) {
                 checkSession();
+            });
+            
+            // Check when page becomes visible (tab switch, window focus)
+            if (document.addEventListener) {
+                document.addEventListener('visibilitychange', function() {
+                    if (!document.hidden) {
+                        checkSession();
+                    }
+                });
             }
-        });
+            
+            // Check when window gains focus
+            window.addEventListener('focus', function() {
+                checkSession();
+            });
+        })();
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

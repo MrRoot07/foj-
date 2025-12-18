@@ -26,19 +26,45 @@ $is_rtl = is_rtl();
                     var response = JSON.parse(xhr.responseText);
                     if (!response.authenticated) {
                         window.location.replace('login.php');
+                        return false;
                     }
                 } catch(e) {
                     window.location.replace('login.php');
+                    return false;
                 }
             }
+            return true;
         }
-        // Check immediately
-        checkAdminSession();
+        
+        // Prevent back navigation by replacing history
+        if (window.history && window.history.pushState) {
+            window.history.pushState(null, null, window.location.href);
+            window.addEventListener('popstate', function(event) {
+                window.history.pushState(null, null, window.location.href);
+                checkAdminSession();
+            });
+        }
+        
+        // Check immediately on page load
+        if (!checkAdminSession()) {
+            return; // Stop execution if not authenticated
+        }
+        
         // Check when page is shown (including from cache/back button)
         window.addEventListener('pageshow', function(event) {
-            if (event.persisted) { // Page was loaded from cache
+            checkAdminSession();
+        });
+        
+        // Check when page becomes visible (tab switch, window focus)
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
                 checkAdminSession();
             }
+        });
+        
+        // Check when window gains focus
+        window.addEventListener('focus', function() {
+            checkAdminSession();
         });
     </script>
     <?php endif; ?>

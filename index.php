@@ -13,7 +13,134 @@ $is_rtl = is_rtl();
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title><?php echo $companyName; ?> · Fast & Reliable Courier Services</title>
+  <script>
+    (function() {
+      // Check session and update header if user is logged out
+      function checkAndUpdateSession() {
+        if (typeof XMLHttpRequest !== 'undefined') {
+          var xhr = new XMLHttpRequest();
+          xhr.open('GET', 'server/api.php?function_code=checkSession&_=' + new Date().getTime(), false);
+          xhr.send();
+          try {
+            var response = JSON.parse(xhr.responseText);
+            if (!response.authenticated) {
+              // User is not authenticated - remove logged-in buttons and ensure login/register are visible
+              var navCta = document.querySelector('.nav-cta');
+              var mobileMenu = document.getElementById('mobileMenu');
+              
+              if (navCta) {
+                // Remove logged-in buttons from desktop nav
+                var loggedInLinks = navCta.querySelectorAll('a[href="orders.php"], a[href="request.php"], a[href="profile.php"], a[href="logout.php"]');
+                loggedInLinks.forEach(function(link) {
+                  if (link && link.parentNode) {
+                    link.parentNode.removeChild(link);
+                  }
+                });
+                
+                // Ensure login/register buttons exist
+                var hasLogin = navCta.querySelector('a[href="login.php"]');
+                var hasRegister = navCta.querySelector('a[href="register.php"]');
+                
+                if (!hasLogin || !hasRegister) {
+                  // Add login/register buttons if they don't exist
+                  var langSwitcher = navCta.querySelector('.lang-switcher');
+                  if (langSwitcher && !hasLogin) {
+                    var loginBtn = document.createElement('a');
+                    loginBtn.href = 'login.php';
+                    loginBtn.className = 'btn light';
+                    loginBtn.textContent = 'Login';
+                    navCta.insertBefore(loginBtn, langSwitcher.nextSibling);
+                  }
+                  if (langSwitcher && !hasRegister) {
+                    var registerBtn = document.createElement('a');
+                    registerBtn.href = 'register.php';
+                    registerBtn.className = 'btn primary';
+                    registerBtn.textContent = 'Register';
+                    navCta.appendChild(registerBtn);
+                  }
+                }
+              }
+              
+              if (mobileMenu) {
+                // Remove logged-in buttons from mobile menu
+                var mobileLoggedIn = mobileMenu.querySelectorAll('a[href="orders.php"], a[href="request.php"], a[href="profile.php"], a[href="logout.php"]');
+                mobileLoggedIn.forEach(function(link) {
+                  if (link && link.parentNode) {
+                    link.parentNode.removeChild(link);
+                  }
+                });
+                
+                // Ensure login/register buttons exist in mobile menu
+                var mobileHasLogin = mobileMenu.querySelector('a[href="login.php"]');
+                var mobileHasRegister = mobileMenu.querySelector('a[href="register.php"]');
+                
+                if (!mobileHasLogin || !mobileHasRegister) {
+                  var langSwitcherMobile = mobileMenu.querySelector('.lang-switcher-mobile');
+                  if (langSwitcherMobile) {
+                    if (!mobileHasLogin) {
+                      var mobileLoginBtn = document.createElement('a');
+                      mobileLoginBtn.href = 'login.php';
+                      mobileLoginBtn.className = 'btn light';
+                      mobileLoginBtn.textContent = 'Login';
+                      mobileLoginBtn.onclick = function() { toggleMenu(false); };
+                      mobileMenu.insertBefore(mobileLoginBtn, langSwitcherMobile.nextSibling);
+                    }
+                    if (!mobileHasRegister) {
+                      var mobileRegisterBtn = document.createElement('a');
+                      mobileRegisterBtn.href = 'register.php';
+                      mobileRegisterBtn.className = 'btn primary';
+                      mobileRegisterBtn.textContent = 'Register';
+                      mobileRegisterBtn.onclick = function() { toggleMenu(false); };
+                      mobileMenu.appendChild(mobileRegisterBtn);
+                    }
+                  }
+                }
+              }
+              
+              // Redirect if user tries to click protected links
+              document.addEventListener('click', function(e) {
+                var target = e.target.closest('a');
+                if (target && (target.href.includes('orders.php') || target.href.includes('request.php') || target.href.includes('profile.php') || target.href.includes('logout.php'))) {
+                  e.preventDefault();
+                  window.location.replace('login.php');
+                }
+              });
+            }
+          } catch(e) {
+            // On error, assume not authenticated and update UI
+            console.error('Session check error:', e);
+          }
+        }
+      }
+      
+      // Check immediately when script loads
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+          setTimeout(checkAndUpdateSession, 0);
+        });
+      } else {
+        setTimeout(checkAndUpdateSession, 0);
+      }
+      
+      // Check when page is shown (including from cache/back button)
+      window.addEventListener('pageshow', function(event) {
+        checkAndUpdateSession();
+      });
+      
+      // Prevent back navigation to logged-in state
+      if (window.history && window.history.pushState) {
+        window.history.pushState(null, null, window.location.href);
+        window.addEventListener('popstate', function(event) {
+          window.history.pushState(null, null, window.location.href);
+          checkAndUpdateSession();
+        });
+      }
+    })();
+  </script>
   <meta name="description"
     content="<?php echo $companyName; ?> provides same‑day, next‑day, and scheduled courier services with live tracking and exceptional support." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
