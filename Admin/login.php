@@ -58,6 +58,9 @@ if (isset($_SESSION['admin'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Admin Login - FOJ Express</title>
     <link rel="stylesheet" href="assets/css/bootstrap.css">
     <style>
@@ -195,6 +198,25 @@ if (isset($_SESSION['admin'])) {
             </div>
         </form>
     </div>
+
+    <script>
+        // Prevent back navigation after logout
+        if (window.history && window.history.pushState) {
+            window.history.pushState(null, null, window.location.href);
+            window.addEventListener('popstate', function(event) {
+                window.history.pushState(null, null, window.location.href);
+            });
+        }
+        
+        // Clear any cached data
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                }
+            });
+        }
+    </script>
 </body>
 
 </html>
