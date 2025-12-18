@@ -77,10 +77,39 @@ function addRequest($data)
 	
 	if (mysqli_query($con, $sql)) {
 		$request_id = mysqli_insert_id($con);
-		// Generate proper tracking code: FOJ-YYYYMMDD-XXXX
+		// Generate proper tracking code: FOJ-YYYYMMDD-XXXX (sequential)
 		$date = date('Ymd');
-		$random = str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
-		$tracking_code = 'FOJ-' . $date . '-' . $random;
+		
+		// Get the highest sequential number for today
+		$date_prefix = 'FOJ-' . $date . '-';
+		$check_sql = "SELECT tracking_code FROM request WHERE tracking_code LIKE '$date_prefix%' AND tracking_code != '$temp_tracking' ORDER BY request_id DESC";
+		$check_result = mysqli_query($con, $check_sql);
+		
+		$sequential_num = 1; // Start from 0001
+		if ($check_result && mysqli_num_rows($check_result) > 0) {
+			$max_seq = 0;
+			while ($row = mysqli_fetch_assoc($check_result)) {
+				$code = $row['tracking_code'];
+				// Check if it matches the pattern FOJ-YYYYMMDD-XXXX
+				if (preg_match('/^FOJ-' . $date . '-(\d{4})$/', $code, $matches)) {
+					$seq = intval($matches[1]);
+					if ($seq > $max_seq) {
+						$max_seq = $seq;
+					}
+				}
+			}
+			if ($max_seq > 0) {
+				$sequential_num = $max_seq + 1;
+			}
+		}
+		
+		// Ensure sequential number doesn't exceed 9999
+		if ($sequential_num > 9999) {
+			$sequential_num = 1; // Reset to 1 if exceeded (shouldn't happen in practice)
+		}
+		
+		$sequential_str = str_pad($sequential_num, 4, '0', STR_PAD_LEFT);
+		$tracking_code = 'FOJ-' . $date . '-' . $sequential_str;
 		
 		// Generate QR code URL for order details
 		$protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http");
