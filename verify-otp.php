@@ -13,7 +13,7 @@ if (!isset($_SESSION['Email'])) {
 $message = '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $enteredOtp = $_POST['otpCode'];
+    $enteredOtp = strtoupper(trim($_POST['otpCode'])); // Convert to uppercase and trim whitespace
 
     if ($enteredOtp == $_SESSION['OTP']) {
         $email = $_SESSION['Email'];
@@ -307,7 +307,7 @@ $companyName = "FOJ Express";
     <main>
         <div class="auth-card">
             <h1>Verify your OTP</h1>
-            <p class="lead">Please enter the 6-digit code sent to your email.</p>
+            <p class="lead">Please enter the 8-character code sent to your email.</p>
 
             <?php if (!empty($message)): ?>
                 <div class="alert"><?= $message; ?></div>
@@ -316,8 +316,8 @@ $companyName = "FOJ Express";
             <form method="POST" action="verify-otp.php" novalidate>
                 <div class="field">
                     <label for="otpCode">Enter OTP Code</label>
-                    <input id="otpCode" type="text" name="otpCode" required inputmode="numeric" pattern="[0-9]{6}"
-                        placeholder="6-digit OTP" />
+                    <input id="otpCode" type="text" name="otpCode" required inputmode="text" pattern="[A-HJ-NP-Z2-9]{8}" style="text-transform: uppercase;"
+                        placeholder="Enter 8-character code" maxlength="8" />
                 </div>
 
                 <div class="actions">
