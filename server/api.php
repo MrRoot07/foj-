@@ -518,4 +518,16 @@ if (isset($_GET['function_code']) && $_GET['function_code'] == 'getCustomerTbleD
     }
     ob_end_flush();
     exit;
+} else if (isset($_GET['function_code']) && $_GET['function_code'] == 'checkSession') {
+    // Check if user session is still valid
+    ob_clean();
+    header('Content-Type: application/json');
+    
+    if (isset($_SESSION['auth']) && isset($_SESSION['customer_id'])) {
+        echo json_encode(array('success' => true, 'authenticated' => true));
+    } else {
+        echo json_encode(array('success' => true, 'authenticated' => false));
+    }
+    ob_end_flush();
+    exit;
 }

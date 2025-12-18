@@ -20,6 +20,35 @@ $is_rtl = is_rtl();
 <html lang="<?php echo $current_lang; ?>" dir="<?php echo $is_rtl ? 'rtl' : 'ltr'; ?>">
 
 <head>
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <script>
+        // Check session on page load and when navigating back (pageshow event)
+        function checkSession() {
+            if (typeof XMLHttpRequest !== 'undefined') {
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', 'server/api.php?function_code=checkSession&_=' + new Date().getTime(), false);
+                xhr.send();
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    if (!response.authenticated) {
+                        window.location.replace('login.php');
+                    }
+                } catch(e) {
+                    window.location.replace('login.php');
+                }
+            }
+        }
+        // Check immediately
+        checkSession();
+        // Check when page is shown (including from cache/back button)
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) { // Page was loaded from cache
+                checkSession();
+            }
+        });
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"

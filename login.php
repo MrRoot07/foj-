@@ -16,6 +16,9 @@ $is_rtl = is_rtl();
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Login · <?php echo $companyName; ?></title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -332,6 +335,25 @@ $is_rtl = is_rtl();
             </div>
         </div>
     </footer>
+
+    <script>
+        // Prevent back navigation after logout
+        if (window.history && window.history.pushState) {
+            window.history.pushState(null, null, window.location.href);
+            window.addEventListener('popstate', function(event) {
+                window.history.pushState(null, null, window.location.href);
+            });
+        }
+        
+        // Clear any cached data
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                }
+            });
+        }
+    </script>
 
 </body>
 
