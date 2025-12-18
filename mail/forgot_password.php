@@ -13,13 +13,13 @@ $phpmailer->isSMTP();
 $phpmailer->Host = 'smtp.gmail.com';
 $phpmailer->SMTPAuth = true;
 $phpmailer->Port = 587;
-$phpmailer->Username = 'sultanssparesort@gmail.com';
-$phpmailer->Password = 'mfaenrelmrtztlxu';
+$phpmailer->Username = 'alaqilimuaadh@gmail.com';
+$phpmailer->Password = 'fvehypcpyqotkyns';
 //Content
 $phpmailer->isHTML(true);                               // Set email format to HTML
 $phpmailer->CharSet = "UTF-8";                                   // لدعم اللغة العربية
 // /Recipients
-$phpmailer->setFrom('sultanssparesort@gmail.com', 'SULTANS SPA RESORT');
+$phpmailer->setFrom('alaqilimuaadh@gmail.com', 'SULTANS SPA RESORT');
 $phpmailer->addAddress($email);     //Add a recipient
 $phpmailer->Subject = 'Forgot Password';
 $phpmailer->Body    =

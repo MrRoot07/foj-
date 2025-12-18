@@ -68,11 +68,11 @@ if (isset($_SESSION["Email"])) {
         $phpmailer->Host = 'smtp.gmail.com';
         $phpmailer->SMTPAuth = true;
         $phpmailer->Port = 587;
-        $phpmailer->Username = 'sultanssparesort@gmail.com';
-        $phpmailer->Password = 'mfaenrelmrtztlxu';
+        $phpmailer->Username = 'alaqilimuaadh@gmail.com';
+        $phpmailer->Password = 'fvehypcpyqotkyns';
         $phpmailer->isHTML(true); // Set email format to HTML
         $phpmailer->CharSet = "UTF-8";
-        $phpmailer->setFrom('sultanssparesort@gmail.com', 'FOJ Express');
+        $phpmailer->setFrom('alaqilimuaadh@gmail.com', 'FOJ Express');
         $phpmailer->addAddress($email); // Add recipient
         $phpmailer->Subject = 'Verification Code';
         $phpmailer->Body = '

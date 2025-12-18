@@ -46,11 +46,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name']) && isset($_PO
         $mail_company->Host = 'smtp.gmail.com';
         $mail_company->SMTPAuth = true;
         $mail_company->Port = 587;
-        $mail_company->Username = 'sultanssparesort@gmail.com';
-        $mail_company->Password = 'mfaenrelmrtztlxu';
+        $mail_company->Username = 'alaqilimuaadh@gmail.com';
+        $mail_company->Password = 'fvehypcpyqotkyns';
         $mail_company->isHTML(true);
         $mail_company->CharSet = "UTF-8";
-        $mail_company->setFrom('sultanssparesort@gmail.com', 'FOJ Express Contact Form');
+        $mail_company->setFrom('alaqilimuaadh@gmail.com', 'FOJ Express Contact Form');
         $mail_company->addAddress($company_email);
         $mail_company->addReplyTo($email, $name);
         $mail_company->Subject = 'New Contact Form Submission - ' . $service;
@@ -81,11 +81,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name']) && isset($_PO
         $mail_customer->Host = 'smtp.gmail.com';
         $mail_customer->SMTPAuth = true;
         $mail_customer->Port = 587;
-        $mail_customer->Username = 'sultanssparesort@gmail.com';
+        $mail_customer->Username = 'alaqilimuaadh@gmail.com';
         $mail_customer->Password = 'mfaenrelmrtztlxu';
         $mail_customer->isHTML(true);
         $mail_customer->CharSet = "UTF-8";
-        $mail_customer->setFrom('sultanssparesort@gmail.com', 'FOJ Express');
+        $mail_customer->setFrom('alaqilimuaadh@gmail.com', 'FOJ Express');
         $mail_customer->addAddress($email, $name);
         $mail_customer->Subject = 'Thank You for Contacting FOJ Express';
         $mail_customer->Body = '
